@@ -6,6 +6,7 @@ matplotlib
 tqdm
 huggingface_hub
 timm
+einops
 thop
 scipy
 pandas
