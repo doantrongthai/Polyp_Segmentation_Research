@@ -3,10 +3,13 @@ End-to-End Training Entry Point for Polyp Segmentation.
 
 Usage:
     python train.py --model pranet --loss structure_loss --seed 42
+    python train.py --model polyp_pvt --loss structure_loss --seed 42
 
-Fixed hyperparameter settings strictly reproducing PraNet (MICCAI 2020):
-    Epochs: 20
-    Initial Learning Rate: 1e-4 (Adam optimizer)
+Hyperparameter settings reproducing each paper exactly:
+    Epochs: 100  (PraNet paper: 20; Polyp-PVT Table II: 100; we default 100)
+    Initial Learning Rate: 1e-4
+    Optimizer: Adam for PraNet/SANet/HarDNet-MSEG/UNet variants
+               AdamW (weight_decay=1e-4) for Polyp-PVT  [Table II]
     Batch Size: 16
     Input Resolution: 352x352 (with multi-scale [0.75, 1.0, 1.25] per batch)
     Gradient Clipping: 0.5
@@ -67,8 +70,9 @@ def main():
     print(f"============================================================")
     print(f"Model: {args.model} | Loss: {args.loss} | Seed: {args.seed} | Device: {device}")
     print(f"Resolution: {args.trainsize}x{args.trainsize} (Multi-scale: 0.75, 1.0, 1.25)")
-    print(f"Optimizer: Adam (lr={args.lr}) | Epochs: {args.epochs} | Batch: {args.batchsize}")
+    print(f"LR: {args.lr} | Epochs: {args.epochs} | Batch: {args.batchsize}")
     print(f"============================================================")
+
 
     # 3. Setup Dataset
     data_root = setup_dataset(args.data_root)
@@ -101,7 +105,18 @@ def main():
     print(f"[Init] Initializing model '{args.model}'...")
     model = get_model(args.model)
     loss_fn = get_loss(args.loss)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+
+    # Per-paper optimizer dispatch:
+    #   Polyp-PVT Table II: AdamW, weight_decay=1e-4
+    #   PraNet / SANet / HarDNet-MSEG / UNet variants: Adam (no weight decay)
+    _ADAMW_MODELS = {'polyp_pvt'}
+    if args.model.lower() in _ADAMW_MODELS:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
+        opt_name = f"AdamW (weight_decay=1e-4)"
+    else:
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        opt_name = "Adam"
+
 
     # 6. Logger, Checkpointer, and Evaluator
     logger = Logger(log_dir='./logs', model_name=args.model)
@@ -110,7 +125,9 @@ def main():
     trainer = Trainer(model, optimizer, loss_fn, args, logger, checkpointer)
 
     # 7. Training Loop
+    print(f"[Init] Optimizer: {opt_name} | lr={args.lr}")
     print("\n[Train] Starting training...")
+
     for epoch in range(1, args.epochs + 1):
         train_stats = trainer.train_one_epoch(train_loader, epoch)
         val_metrics = trainer.validate(val_loader, val_evaluator)
