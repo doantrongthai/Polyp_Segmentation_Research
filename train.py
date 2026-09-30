@@ -47,11 +47,11 @@ def main():
     parser.add_argument('--model', type=str, default='pranet', help=f'Model name. Available: {list_models()}')
     parser.add_argument('--loss', type=str, default='structure_loss', help=f'Loss name. Available: {list_losses()}')
     parser.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility')
+    parser.add_argument('--epochs', type=int, default=20, help='Total training epochs (default 20 as in PraNet repo, or 50/100)')
     parser.add_argument('--data_root', type=str, default='./data', help='Dataset root path')
     args = parser.parse_args()
 
-    # 1. Enforce Fixed PraNet Settings
-    args.epochs = 20
+    # 1. Enforce Fixed PraNet Hyperparameters
     args.lr = 1e-4
     args.batchsize = 16
     args.trainsize = 352
