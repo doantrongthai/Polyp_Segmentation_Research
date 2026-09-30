@@ -178,22 +178,21 @@ class EMCADNet(nn.Module):
     """
     EMCAD: Efficient Multi-scale Convolutional Attention Decoding (CVPR 2024).
 
-    Backbone: PVT-v2-B2 (via timm, pretrained=True)
+    Backbone: PVT-v2-B0 (smallest variant, via timm, pretrained=True)
+              Channels: [32, 64, 160, 256]
     Decoder : EMCAD with MSDC [1,3,5] + LGAG attention gates
-    Params  : ~23.7M (PVT-v2-B2 ~25M encoder + lightweight EMCAD decoder)
     """
 
     def __init__(self, pretrained: bool = True, num_classes: int = 1):
         super().__init__()
-        # PVT-v2-B2 encoder via timm
+        # PVT-v2-B0 (smallest): channels [32, 64, 160, 256]
         self.backbone = timm.create_model(
-            'pvt_v2_b2',
+            'pvt_v2_b0',
             pretrained=pretrained,
             features_only=True,
             out_indices=(0, 1, 2, 3),
         )
-        # PVT-v2-B2 feature channels: [64, 128, 320, 512]
-        channels = [64, 128, 320, 512]
+        channels = [32, 64, 160, 256]
         self.decoder = EMCADDecoder(
             channels=channels,
             num_classes=num_classes,

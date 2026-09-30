@@ -69,23 +69,16 @@ def setup_dataset(data_root: str = DEFAULT_DATA_ROOT) -> str:
         except Exception as e:
             print(f"[Dataset] huggingface_hub failed ({e}). Attempting direct download...")
             import requests
-            from tqdm import tqdm
             url = f"https://huggingface.co/datasets/{DATASET_REPO}/resolve/main/{DATASET_FILE}"
             target_zip = os.path.join(data_root, DATASET_FILE)
             with requests.get(url, stream=True) as r:
                 r.raise_for_status()
-                total = int(r.headers.get('content-length', 0))
-                with open(target_zip, 'wb') as f, tqdm(
-                    total=total, unit='B', unit_scale=True,
-                    unit_divisor=1024, desc='Downloading dataset.zip'
-                ) as bar:
-                    for chunk in r.iter_content(chunk_size=1024 * 1024):
+                with open(target_zip, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024 * 1024 * 8):
                         if chunk:
                             f.write(chunk)
-                            bar.update(len(chunk))
             found_zip = target_zip
             print(f"[Dataset] Direct download completed: {found_zip}")
-
 
     # Step 3: Extract archive
     print(f"[Dataset] Extracting archive '{found_zip}' to '{data_root}'...")

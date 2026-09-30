@@ -171,20 +171,20 @@ class GCASCADENet(nn.Module):
     """
     G-CASCADE (WACV 2024): Graph Convolutional Cascade Decoding.
 
-    Backbone: PVT-v2-B2 (via timm, pretrained=True)
+    Backbone: PVT-v2-B0 (smallest variant, via timm, pretrained=True)
+              Channels: [32, 64, 160, 256]
     Decoder : G-CASCADE with GridGCB (grid-graph conv equivalent)
-    Params  : ~26M
     """
 
     def __init__(self, pretrained: bool = True, num_classes: int = 1):
         super().__init__()
         self.backbone = timm.create_model(
-            'pvt_v2_b2',
+            'pvt_v2_b0',
             pretrained=pretrained,
             features_only=True,
             out_indices=(0, 1, 2, 3),
         )
-        channels = [64, 128, 320, 512]
+        channels = [32, 64, 160, 256]
         self.decoder = GCASCADEDecoder(channels=channels, num_classes=num_classes)
 
     def forward(self, x):
