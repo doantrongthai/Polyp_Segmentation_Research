@@ -50,8 +50,11 @@ def main():
     parser.add_argument('--model', type=str, default='pranet', help=f'Model name. Available: {list_models()}')
     parser.add_argument('--loss', type=str, default='structure_loss', help=f'Loss name. Available: {list_losses()}')
     parser.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility')
-    parser.add_argument('--epochs', type=int, default=100, help='Total training epochs (100 as in Table II of Polyp-PVT paper)')
+    parser.add_argument('--epochs', type=int, default=100, help='Total training epochs')
     parser.add_argument('--data_root', type=str, default='./data', help='Dataset root path')
+    parser.add_argument('--resume', type=str, default=None,
+                        help='Path to checkpoint (.pth) to resume training from. '
+                             'Restores model weights, optimizer state, and starting epoch.')
     args = parser.parse_args()
 
     # 1. Enforce Fixed PraNet Hyperparameters
@@ -124,11 +127,27 @@ def main():
     val_evaluator = Evaluator(data_root=data_root, model=model, device=device, testsize=args.trainsize)
     trainer = Trainer(model, optimizer, loss_fn, args, logger, checkpointer)
 
-    # 7. Training Loop
-    print(f"[Init] Optimizer: {opt_name} | lr={args.lr}")
-    print("\n[Train] Starting training...")
+    # 7. Resume from checkpoint (optional)
+    start_epoch = 1
+    if args.resume:
+        if not os.path.exists(args.resume):
+            print(f"[Resume] WARNING: checkpoint '{args.resume}' not found. Starting from epoch 1.")
+        else:
+            resumed_epoch, resumed_metrics = Checkpointer.load(
+                model, args.resume, device=device, optimizer=optimizer
+            )
+            start_epoch = resumed_epoch + 1
+            checkpointer.best_dice = resumed_metrics.get('mDice', 0.0)
+            print(f"[Resume] Resumed from epoch {resumed_epoch} "
+                  f"(best mDice so far: {checkpointer.best_dice:.4f}). "
+                  f"Continuing from epoch {start_epoch}.")
 
-    for epoch in range(1, args.epochs + 1):
+    # 8. Training Loop
+    print(f"[Init] Optimizer: {opt_name} | lr={args.lr}")
+    print(f"\n[Train] Starting training from epoch {start_epoch} to {args.epochs}...")
+
+    for epoch in range(start_epoch, args.epochs + 1):
+
         train_stats = trainer.train_one_epoch(train_loader, epoch)
         val_metrics = trainer.validate(val_loader, val_evaluator)
         logger.log(epoch, train_stats, val_metrics)
