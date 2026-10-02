@@ -164,7 +164,19 @@ class EdgeProfiler:
         # Restore model to original device
         self.model.to(self.device)
 
+        # Hardware and Real-time capability check
+        hw_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+        gpu_fps = gpu_info['gpu_fps']
+        cpu_fps = cpu_info['cpu_fps']
+        if not np.isnan(gpu_fps) and gpu_fps >= 30.0:
+            rt_status = "YES (GPU)"
+        elif not np.isnan(cpu_fps) and cpu_fps >= 30.0:
+            rt_status = "YES (CPU)"
+        else:
+            rt_status = "NO (<30 FPS)"
+
         result = {
+            'Hardware': hw_name,
             'Resolution': f"{self.testsize}x{self.testsize}",
             'Params (M)': params_info['total_params_M'],
             'FLOPs (G)': flops_G,
@@ -174,8 +186,10 @@ class EdgeProfiler:
             'GPU Peak Mem (MB)': gpu_info['gpu_peak_mem_mb'],
             'CPU Latency (ms)': cpu_info['cpu_latency_ms'],
             'CPU FPS': cpu_info['cpu_fps'],
+            'Real-time (>=30 FPS)': rt_status,
         }
         return result
+
 
     @staticmethod
     def print_table(results: dict, model_name: str = "Model"):

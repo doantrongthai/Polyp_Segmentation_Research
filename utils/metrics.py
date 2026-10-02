@@ -53,7 +53,43 @@ def precision_recall_specificity(pred: np.ndarray, gt: np.ndarray, smooth: float
     return float(precision), float(recall), float(specificity)
 
 
+def hd95_score(pred: np.ndarray, gt: np.ndarray) -> float:
+    """
+    95th percentile Hausdorff Distance (HD95) in pixels.
+    Measures boundary discrepancy between predicted and GT segmentation.
+    Ref: Medpy implementation standard in MICCAI / IEEE TMI medical imaging benchmarks.
+    """
+    pred_b = (pred > 0.5).astype(bool)
+    gt_b = (gt > 0.5).astype(bool)
+
+    # Edge cases
+    if pred_b.sum() == 0 and gt_b.sum() == 0:
+        return 0.0
+    if pred_b.sum() == 0 or gt_b.sum() == 0:
+        h, w = pred_b.shape
+        return float(np.sqrt(h**2 + w**2))
+
+    # Extract single-pixel boundary contours
+    struct = scipy.ndimage.generate_binary_structure(2, 1)
+    pred_border = pred_b ^ scipy.ndimage.binary_erosion(pred_b, structure=struct)
+    gt_border = gt_b ^ scipy.ndimage.binary_erosion(gt_b, structure=struct)
+
+    # Compute Euclidean distance transforms from borders
+    dt_pred = scipy.ndimage.distance_transform_edt(~pred_border)
+    dt_gt = scipy.ndimage.distance_transform_edt(~gt_border)
+
+    # Distances from pred border points to nearest gt border point and vice versa
+    d_pred_to_gt = dt_gt[pred_border]
+    d_gt_to_pred = dt_pred[gt_border]
+
+    if len(d_pred_to_gt) == 0 or len(d_gt_to_pred) == 0:
+        return 0.0
+
+    return float(max(np.percentile(d_pred_to_gt, 95), np.percentile(d_gt_to_pred, 95)))
+
+
 def weighted_fbeta(pred: np.ndarray, gt: np.ndarray, beta2: float = 1.0) -> float:
+
     """
     Weighted F-measure (wFb / F_beta^w).
     Reference: Margolin et al. "How to Evaluate Foreground Maps?", CVPR 2014.
@@ -224,6 +260,7 @@ class MetricCalculator:
         self.precisions = []
         self.recalls = []
         self.specificities = []
+        self.hd95s = []
 
     def update(self, pred: np.ndarray, gt: np.ndarray):
         """
@@ -243,6 +280,7 @@ class MetricCalculator:
         s = smeasure(pred, gt)
         e = emeasure(pred, gt)
         prec, rec, spec = precision_recall_specificity(pred, gt)
+        hd = hd95_score(pred, gt)
 
         self.dices.append(d)
         self.ious.append(j)
@@ -253,17 +291,20 @@ class MetricCalculator:
         self.precisions.append(prec)
         self.recalls.append(rec)
         self.specificities.append(spec)
+        self.hd95s.append(hd)
 
     def get_results(self) -> dict:
         """Return dictionary of mean metrics."""
         return {
             'mDice': float(np.mean(self.dices)) if self.dices else 0.0,
             'mIoU': float(np.mean(self.ious)) if self.ious else 0.0,
+            'Recall': float(np.mean(self.recalls)) if self.recalls else 0.0,
+            'Precision': float(np.mean(self.precisions)) if self.precisions else 0.0,
+            'Specificity': float(np.mean(self.specificities)) if self.specificities else 0.0,
+            'HD95': float(np.mean(self.hd95s)) if self.hd95s else 0.0,
             'wFb': float(np.mean(self.wfbs)) if self.wfbs else 0.0,
             'Sm': float(np.mean(self.sms)) if self.sms else 0.0,
             'Em': float(np.mean(self.ems)) if self.ems else 0.0,
             'MAE': float(np.mean(self.maes)) if self.maes else 0.0,
-            'Precision': float(np.mean(self.precisions)) if self.precisions else 0.0,
-            'Recall': float(np.mean(self.recalls)) if self.recalls else 0.0,
-            'Specificity': float(np.mean(self.specificities)) if self.specificities else 0.0,
         }
+

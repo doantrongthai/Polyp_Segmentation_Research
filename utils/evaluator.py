@@ -145,7 +145,7 @@ class Evaluator:
         # 1. Print Accuracy Table
         if results:
             df = pd.DataFrame(results).T
-            cols = ['mDice', 'mIoU', 'wFb', 'Sm', 'Em', 'MAE']
+            cols = ['mDice', 'mIoU', 'Recall', 'Precision', 'Specificity', 'HD95', 'wFb', 'Sm', 'Em', 'MAE']
             display_cols = [c for c in cols if c in df.columns]
             df_disp = df[display_cols]
 
@@ -183,7 +183,7 @@ class Evaluator:
 
         if results:
             df = pd.DataFrame(results).T
-            cols = ['mDice', 'mIoU', 'wFb', 'Sm', 'Em', 'MAE']
+            cols = ['mDice', 'mIoU', 'Recall', 'Precision', 'Specificity', 'HD95', 'wFb', 'Sm', 'Em', 'MAE']
             display_cols = [c for c in cols if c in df.columns]
             df_disp = df[display_cols]
 

@@ -118,7 +118,7 @@ def main():
         results['Mean'] = mean_row
 
         df = pd.DataFrame(results).T
-        cols = ['mDice', 'mIoU', 'wFb', 'Sm', 'Em', 'MAE']
+        cols = ['mDice', 'mIoU', 'Recall', 'Precision', 'Specificity', 'HD95', 'wFb', 'Sm', 'Em', 'MAE']
         display_cols = [c for c in cols if c in df.columns]
         df_disp = df[display_cols]
 
