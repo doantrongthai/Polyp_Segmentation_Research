@@ -159,15 +159,30 @@ def main():
     best_weights = checkpointer.get_best_path()
     if os.path.exists(best_weights):
         print(f"\n============================================================")
-        print(f"RUNNING FINAL BENCHMARK EVALUATION ON BEST MODEL: {best_weights}")
+        print(f"RUNNING FINAL BENCHMARK & EDGE AI EVALUATION ON BEST MODEL: {best_weights}")
         print(f"============================================================")
         Checkpointer.load(model, best_weights, device=device)
-        evaluator = Evaluator(data_root=data_root, model=model, device=device, testsize=args.trainsize)
+        evaluator = Evaluator(
+            data_root=data_root,
+            model=model,
+            device=device,
+            testsize=args.trainsize,
+            model_name=args.model,
+            weights_path=best_weights
+        )
         results_dir = os.path.join('./results', args.model)
+
+        # 1. Edge AI Deployment Profiling (Params, FLOPs, Latency, FPS, Peak Memory)
+        print(f"\n[Evaluation] Profiling Edge AI & Hardware efficiency...")
+        efficiency = evaluator.benchmark_efficiency(measure_cpu=True)
+
+        # 2. Benchmark accuracy across all 5 test sets
         results = evaluator.evaluate_all(save_results_dir=results_dir)
-        evaluator.print_table(results)
-        evaluator.save_csv(results, path=os.path.join(results_dir, 'metrics.csv'))
-        evaluator.save_latex(results, path=os.path.join(results_dir, 'metrics.tex'))
+
+        # 3. Print & save both Accuracy and Hardware metrics
+        evaluator.print_table(results, efficiency=efficiency, model_name=args.model)
+        evaluator.save_csv(results, path=os.path.join(results_dir, 'metrics.csv'), efficiency=efficiency)
+        evaluator.save_latex(results, path=os.path.join(results_dir, 'metrics.tex'), efficiency=efficiency)
 
     print("\n[Done] Training and benchmark evaluation complete.")
 
