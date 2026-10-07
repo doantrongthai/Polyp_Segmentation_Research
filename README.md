@@ -92,14 +92,33 @@ PolypSeg_Project/
 │   ├── enet.py               # ENet (arXiv 2016) [0.40M]
 │   ├── edanet.py             # EDANet (IEEE TMM 2019) [0.61M]
 │   ├── espnetv2.py           # ESPNetv2 (CVPR 2019) [0.79M]
+│   ├── malunet.py            # MALUNet (BIBM 2022) [0.18M]
+│   ├── fast_scnn.py          # Fast-SCNN (BMVC 2019) [1.14M]
+│   ├── cmunext.py            # CMUNeXt base (arXiv 2024) [2.33M]
+│   ├── lgps.py               # LGPS (2024) [2.69M]
+│   ├── emcad.py              # EMCAD-B0 (CVPR 2024) [4.36M]
+│   ├── gcascade.py           # G-CASCADE-B0 (WACV 2024) [4.64M]
+│   ├── meganet.py            # MEGANet (2024) [44.19M]
 │   └── _backbone/
 │       ├── __init__.py
 │       └── res2net.py        # Self-contained Res2Net-50 v1b (26w_4s)
 ├── loss/
 │   ├── __init__.py           # Dynamic auto-import & loss registry
-│   ├── structure_loss.py     # Weighted BCE + Weighted IoU (@register_loss('structure_loss'))
-│   ├── bce_dice.py           # Combined BCE + Dice loss (@register_loss('bce_dice'))
-│   └── dice.py               # Soft Dice loss (@register_loss('dice'))
+│   ├── structure_loss.py     # Weighted BCE + Weighted IoU (PraNet, Polyp-PVT, HarDNet)
+│   ├── bce.py                # Binary Cross-Entropy with Logits
+│   ├── dice.py               # Soft Dice Loss
+│   ├── bce_dice.py           # Combined BCE + Dice loss
+│   ├── focal_loss.py         # Focal Loss (ICCV 2017)
+│   ├── focal_dice.py         # Focal + Dice Compound Loss (SANet, ColonSegNet)
+│   ├── iou_loss.py           # Soft Jaccard / IoU Loss
+│   ├── tversky_loss.py       # Tversky Loss with asymmetric FP/FN penalties (MLMI 2017)
+│   ├── focal_tversky_loss.py # Focal Tversky Loss for hard lesion mining (ISBI 2019)
+│   ├── generalized_dice.py   # Generalized Dice Loss with volume weighting (DLMIA 2017)
+│   ├── lovasz_loss.py        # Lovász-Hinge Loss submodular surrogate (CVPR 2018)
+│   ├── boundary_loss.py      # Signed Distance Boundary / Surface Loss (MIDL 2019)
+│   ├── edge_loss.py          # Edge-Aware Laplacian Contour Loss (PraNet, Psi-Net)
+│   ├── combo_loss.py         # Combo Loss balancing input/output imbalance (CMIG 2019)
+│   └── hausdorff_loss.py     # Differentiable Approximate Hausdorff Distance Loss (IEEE TMI 2019)
 ├── utils/
 │   ├── __init__.py
 │   ├── dataloader.py         # PolypDataset & TestDataset with synchronized transforms
