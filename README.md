@@ -118,7 +118,9 @@ PolypSeg_Project/
 │   ├── boundary_loss.py      # Signed Distance Boundary / Surface Loss (MIDL 2019)
 │   ├── edge_loss.py          # Edge-Aware Laplacian Contour Loss (PraNet, Psi-Net)
 │   ├── combo_loss.py         # Combo Loss balancing input/output imbalance (CMIG 2019)
-│   └── hausdorff_loss.py     # Differentiable Approximate Hausdorff Distance Loss (IEEE TMI 2019)
+│   ├── hausdorff_loss.py     # Differentiable Approximate Hausdorff Distance Loss (IEEE TMI 2019)
+│   ├── weighted_focal_iou.py # Weighted Focal + Weighted IoU (ColonFormer BMVC 2021)
+│   └── tversky_bce.py        # Combined Tversky + BCE Loss (UACANet ACM MM 2021)
 ├── utils/
 │   ├── __init__.py
 │   ├── dataloader.py         # PolypDataset & TestDataset with synchronized transforms

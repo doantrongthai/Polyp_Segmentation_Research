@@ -40,3 +40,4 @@ def iou_loss(pred: torch.Tensor, mask: torch.Tensor, smooth: float = 1.0) -> tor
 
     iou = (intersection + smooth) / (union + smooth)
     return (1.0 - iou).mean()
+

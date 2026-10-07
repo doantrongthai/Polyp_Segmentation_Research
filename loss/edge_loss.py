@@ -79,3 +79,4 @@ def edge_loss(
     l_edge = (1.0 - (2.0 * edge_inter + smooth) / (edge_union + smooth)).mean()
 
     return bce + dice + edge_weight * l_edge
+

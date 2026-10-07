@@ -46,3 +46,4 @@ def focal_loss(
     focal_weight = alpha_t * torch.pow((1.0 - p_t).clamp(min=0.0, max=1.0), gamma)
 
     return (focal_weight * bce).mean()
+

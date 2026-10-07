@@ -77,3 +77,4 @@ def boundary_loss(
     l_boundary = (prob * sdf_tensor).mean()
 
     return l_dice + alpha * l_boundary
+

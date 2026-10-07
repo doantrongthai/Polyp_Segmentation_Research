@@ -56,3 +56,4 @@ def focal_tversky_loss(
     ti = (true_pos + smooth) / (true_pos + alpha * false_pos + beta * false_neg + smooth)
     ftl = torch.pow((1.0 - ti).clamp(min=1e-7, max=1.0), gamma)
     return ftl.mean()
+

@@ -65,3 +65,4 @@ def lovasz_hinge_loss(pred: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         losses.append(_lovasz_hinge_flat(logits_flat, labels_flat))
 
     return torch.stack(losses).mean()
+

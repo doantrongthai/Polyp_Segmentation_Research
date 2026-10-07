@@ -26,3 +26,4 @@ def bce_loss(pred: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     if pred.shape != mask.shape:
         mask = mask.view_as(pred)
     return F.binary_cross_entropy_with_logits(pred, mask.float())
+

@@ -55,3 +55,4 @@ def generalized_dice_loss(pred: torch.Tensor, mask: torch.Tensor, smooth: float 
 
     gdl = 1.0 - (numerator + smooth) / denominator
     return gdl.mean()
+
