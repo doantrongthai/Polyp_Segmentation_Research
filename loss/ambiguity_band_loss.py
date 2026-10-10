@@ -24,11 +24,66 @@ background are still learned sharply; only the ambiguous rim is relaxed.
 """
 
 from loss import register_loss
-from loss._common import (to_4d, label_components, nearest_component_map,
-                          signed_distance)
 import numpy as np
 import torch
 import torch.nn.functional as F
+import scipy.ndimage
+
+
+# ----------------------------------------------------------------------
+# Helpers (self-contained, no extra module needed)
+# ----------------------------------------------------------------------
+_CONN8 = np.ones((3, 3), dtype=bool)
+
+
+def to_4d(pred: torch.Tensor, mask: torch.Tensor):
+    """Bring ``pred`` / ``mask`` to shape (B, 1, H, W), mask as float."""
+    if pred.dim() == 3:
+        pred = pred.unsqueeze(1)
+    if mask.shape != pred.shape:
+        mask = mask.reshape(pred.shape)
+    return pred, mask.float()
+
+def label_components(mask_2d: np.ndarray, min_size: int = 0):
+    """
+    8-connected components of a binary numpy mask.
+
+    Components smaller than ``min_size`` pixels are dropped (useful because
+    resized GT masks often contain a few stray pixels).
+
+    Returns:
+        (labeled, n): int array with ids 1..n (0 = background), and n.
+    """
+    labeled, n = scipy.ndimage.label(mask_2d > 0.5, structure=_CONN8)
+    if min_size > 0 and n > 0:
+        sizes = np.bincount(labeled.ravel())
+        small = sizes < min_size
+        small[0] = False
+        if small.any():
+            labeled[small[labeled]] = 0
+            labeled, n = scipy.ndimage.label(labeled > 0, structure=_CONN8)
+    return labeled, n
+
+def nearest_component_map(labeled: np.ndarray) -> np.ndarray:
+    """Assign every pixel to its nearest GT component id (Voronoi partition)."""
+    if labeled.max() == 0:
+        return labeled
+    _, idx = scipy.ndimage.distance_transform_edt(labeled == 0, return_indices=True)
+    return labeled[idx[0], idx[1]]
+
+def signed_distance(mask_2d: np.ndarray):
+    """
+    Signed distance map in PIXELS (not normalized): > 0 outside, < 0 inside,
+    same sign convention as ``boundary_loss.py``.
+
+    Returns ``None`` if the mask is empty or full (no boundary).
+    """
+    pos = mask_2d > 0.5
+    if not pos.any() or pos.all():
+        return None
+    out = scipy.ndimage.distance_transform_edt(~pos)
+    inn = scipy.ndimage.distance_transform_edt(pos)
+    return (out - inn).astype(np.float32)
 
 
 def _band_targets(mask_2d: np.ndarray, delta_ratio: float, delta_min: float,
