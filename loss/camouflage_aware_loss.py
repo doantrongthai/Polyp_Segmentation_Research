@@ -25,10 +25,50 @@ IMPORTANT - needs the input image:
 """
 
 from loss import register_loss
-from loss._common import to_4d, structure_loss, boundary_weight
 import warnings
 import torch
 import torch.nn.functional as F
+
+
+# ----------------------------------------------------------------------
+# Helpers (self-contained, no extra module needed)
+# ----------------------------------------------------------------------
+
+def to_4d(pred: torch.Tensor, mask: torch.Tensor):
+    """Bring ``pred`` / ``mask`` to shape (B, 1, H, W), mask as float."""
+    if pred.dim() == 3:
+        pred = pred.unsqueeze(1)
+    if mask.shape != pred.shape:
+        mask = mask.reshape(pred.shape)
+    return pred, mask.float()
+
+def boundary_weight(mask: torch.Tensor, kernel: int = 31) -> torch.Tensor:
+    """PraNet-style boundary emphasis ``|avgpool(mask) - mask|`` in [0, 1]."""
+    return torch.abs(
+        F.avg_pool2d(mask, kernel, stride=1, padding=kernel // 2) - mask
+    )
+
+def structure_loss(pred: torch.Tensor, mask: torch.Tensor,
+                   weit: torch.Tensor = None) -> torch.Tensor:
+    """
+    PraNet structure loss (weighted BCE + weighted IoU).
+
+    Args:
+        pred: Logits (B, 1, H, W).
+        mask: GT (B, 1, H, W) in [0, 1].
+        weit: Optional pixel weight map (B, 1, H, W). Defaults to
+            ``1 + 5 * boundary_weight(mask)`` as in PraNet.
+    """
+    if weit is None:
+        weit = 1 + 5 * boundary_weight(mask)
+    wbce = F.binary_cross_entropy_with_logits(pred, mask, reduction='none')
+    wbce = (weit * wbce).sum(dim=(2, 3)) / weit.sum(dim=(2, 3))
+
+    prob = torch.sigmoid(pred)
+    inter = (prob * mask * weit).sum(dim=(2, 3))
+    union = ((prob + mask) * weit).sum(dim=(2, 3))
+    wiou = 1 - (inter + 1) / (union - inter + 1)
+    return (wbce + wiou).mean()
 
 _IMAGENET_MEAN = (0.485, 0.456, 0.406)
 _IMAGENET_STD = (0.229, 0.224, 0.225)
