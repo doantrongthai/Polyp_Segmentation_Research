@@ -1,5 +1,5 @@
 """
-Arccosine Dice Loss + Boundary (Surface) Loss for Polyp Segmentation.
+Arccosine Dice Loss + Balanced Boundary (Surface) Loss for Polyp Segmentation.
 
 References:
     Kervadec, H., Bouchtiba, J., Desrosiers, C., Granger, E., Dolz, J., & Ben Ayed, I. (2019).
@@ -7,24 +7,28 @@ References:
     Medical Imaging with Deep Learning (MIDL 2019), PMLR 102, pp. 285-296.
 
 Combines two complementary terms:
-    L = (2 / pi) * arccos(DSC_w) + alpha * L_Boundary
+    L = (2 / pi) * arccos(DSC_w) + alpha_t * L_Boundary
 
 1. Arccos Dice (region term):
     Same [0, 1] range and monotonicity as ``1 - DSC``, but with a steeper
-    gradient near DSC = 1, so training keeps pushing once a prediction is
-    already close to the target. DSC is boundary-weighted (PraNet-style
-    weight map) and the arccos backward gradient is clipped to ``max_grad``.
+    gradient near DSC = 1. DSC is boundary-weighted (PraNet-style weight
+    map) and the arccos backward gradient is clipped to ``max_grad``.
 
-2. Boundary loss (distance term):
-    mean(prob * SDF) with the normalized signed distance map of the GT
-    (> 0 outside, < 0 inside). Overlap-based terms ignore WHERE an error is;
-    this term penalizes false positives by their distance to the GT contour,
-    so far-away spurious blobs cost more than slight boundary spill.
+2. Balanced boundary loss (distance term):
+    mean(prob * SDF). The original SDF is normalized by ONE global max
+    distance, which for a typical polyp gives |SDF| ~0.05 inside vs ~0.5
+    outside: the term pushes background down ~10x harder than it pulls the
+    polyp up, making the model conservative (under-segmentation, lower Dice
+    on large in-domain polyps such as Kvasir / CVC-ClinicDB).
+    Here the inside and outside are normalized SEPARATELY, so both lie in
+    [-1, 0] and [0, 1] respectively and pull with comparable strength.
+    Set ``balanced_sdf=False`` to recover the original behaviour.
 
-Tip:
-    Kervadec et al. ramp ``alpha`` up during training (small at the start,
-    when predictions are still noisy). Pass a scheduled value from the
-    training loop, e.g. ``alpha = min(0.5, 0.01 * epoch)``.
+3. Warm-up of alpha (Kervadec et al.):
+    Pass ``epoch`` from the training loop and the boundary weight is ramped
+    linearly from 0 to ``alpha`` over ``warmup_epochs``:
+        loss = loss_fn(pred, mask, epoch=epoch)
+    Without ``epoch``, the full ``alpha`` is used.
 """
 
 from loss import register_loss
@@ -67,18 +71,26 @@ class _SafeArccosFn(torch.autograd.Function):
         return grad_output * local_grad, None
 
 
-def _compute_sdf(mask_np: np.ndarray) -> np.ndarray:
-    """Compute normalized signed distance map from a binary ground truth mask."""
+def _compute_sdf(mask_np: np.ndarray, balanced: bool = True) -> np.ndarray:
+    """
+    Signed distance map from a binary GT mask (> 0 outside, < 0 inside).
+
+    balanced=True : inside / max_inside in [-1, 0], outside / max_outside in [0, 1].
+    balanced=False: (outside - inside) / max|SDF|  (original single normalization).
+    Empty mask -> all ones (any foreground prediction is penalized).
+    """
     posmask = mask_np > 0.5
     if not posmask.any():
         return np.ones_like(mask_np, dtype=np.float32)
     negmask = ~posmask
-    posdis = scipy.ndimage.distance_transform_edt(posmask)
-    negdis = scipy.ndimage.distance_transform_edt(negmask)
-    sdf = negdis - posdis
-    # Normalize to [-1, 1] range
-    max_d = max(np.abs(sdf).max(), 1.0)
-    return (sdf / max_d).astype(np.float32)
+    posdis = scipy.ndimage.distance_transform_edt(posmask)   # inside distances
+    negdis = scipy.ndimage.distance_transform_edt(negmask)   # outside distances
+    if balanced:
+        sdf = negdis / max(negdis.max(), 1.0) - posdis / max(posdis.max(), 1.0)
+    else:
+        sdf = negdis - posdis
+        sdf = sdf / max(np.abs(sdf).max(), 1.0)
+    return sdf.astype(np.float32)
 
 
 @register_loss('arccos_dice_boundary')
@@ -86,21 +98,29 @@ def _compute_sdf(mask_np: np.ndarray) -> np.ndarray:
 def arccos_dice_boundary_loss(
     pred: torch.Tensor,
     mask: torch.Tensor,
-    alpha: float = 0.5,
+    alpha: float = 0.1,
     smooth: float = 1.0,
     kernel_size: int = 31,
-    max_grad: float = 10.0
+    max_grad: float = 10.0,
+    balanced_sdf: bool = True,
+    epoch: int = None,
+    warmup_epochs: int = 20
 ) -> torch.Tensor:
     """
-    Combined Arccos Dice + Boundary Surface Loss.
+    Combined Arccos Dice + Balanced Boundary Surface Loss.
 
     Args:
         pred: Predicted logits of shape (B, 1, H, W) or (B, H, W).
         mask: Ground truth mask of shape (B, 1, H, W) or (B, H, W) in [0, 1].
-        alpha: Weight multiplier for the boundary distance term (default: 0.5).
+        alpha: Final weight of the boundary term (default 0.1; try 0.05-0.25).
         smooth: Laplace smoothing added to the Dice ratio.
         kernel_size: Window used to detect boundary pixels for the weight map.
         max_grad: Gradient-magnitude clip for the arccos backward pass.
+        balanced_sdf: Normalize inside / outside distances separately
+            (False = original Kervadec normalization, for ablation).
+        epoch: Current epoch (0-based). If given, alpha is ramped from 0 to
+            ``alpha`` over ``warmup_epochs``. None = full alpha.
+        warmup_epochs: Length of the linear warm-up.
 
     Returns:
         Scalar loss tensor.
@@ -119,14 +139,22 @@ def arccos_dice_boundary_loss(
     dsc = _dice_coefficient(prob, mask, weight, smooth)
     l_arccos = ((2.0 / math.pi) * _SafeArccosFn.apply(dsc, max_grad)).mean()
 
-    # 2. Boundary distance component
+    # 2. Boundary weight with optional linear warm-up
+    if epoch is not None and warmup_epochs > 0:
+        alpha_t = alpha * min(1.0, (epoch + 1) / warmup_epochs)
+    else:
+        alpha_t = alpha
+    if alpha_t <= 0:
+        return l_arccos
+
+    # 3. Balanced boundary distance component
     mask_np = mask.detach().cpu().numpy()
     sdf_maps = []
     for i in range(b):
         m_2d = mask_np[i].squeeze()
-        sdf_maps.append(_compute_sdf(m_2d))
+        sdf_maps.append(_compute_sdf(m_2d, balanced_sdf))
 
     sdf_tensor = torch.from_numpy(np.stack(sdf_maps)).to(pred.device).view_as(prob)
     l_boundary = (prob * sdf_tensor).mean()
 
-    return l_arccos + alpha * l_boundary
+    return l_arccos + alpha_t * l_boundary
