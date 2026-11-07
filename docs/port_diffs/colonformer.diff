@@ -1,0 +1,50 @@
+--- vendor/ColonFormer/mmseg/models/segmentors/colonformer.py
++++ models/colonformer.py
+@@ -1,18 +1,25 @@
++"""
++ColonFormer: An Efficient Transformer Based Method for Colon Polyp Segmentation.
++
++Reference:
++    Duc, N. T., Oanh, N. T., Thao, N. T. P., Hai, N. T., Quoc, V. D., & Minh, N. T. (2022).
++    ColonFormer: An Efficient Transformer Based Method for Colon Polyp Segmentation.
++    IEEE Access 2022, 10, pp. 80575-80586.
++    Official Repository: https://github.com/ducnt9907/ColonFormer
++"""
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+ 
+-from mmseg.core import add_prefix
+-from mmseg.ops import resize
+-from .. import builder
+-from ..builder import SEGMENTORS
+-from .base import BaseSegmentor
++from models import register_model
+@@ -18,17 +25,18 @@
+-@SEGMENTORS.register_module()
++@register_model("colonformer")
+ class ColonFormer(nn.Module):
+-    def __init__(self,
+-                 backbone,
+-                 decode_head,
+-                 neck=None,
+-                 auxiliary_head=None,
+-                 train_cfg=None,
+-                 test_cfg=None,
+-                 pretrained=None):
++    def __init__(self, num_classes: int = 1, pretrained: bool = False, in_channels: int = 3, **kwargs):
+         super(ColonFormer, self).__init__()
+-        self.backbone = builder.build_backbone(backbone)
+-        self.decode_head = builder.build_head(decode_head)
++        self.backbone = mit_b3()
++        self.decode_head = UPerHead(
++            in_channels=[64, 128, 320, 512],
++            channels=128,
++            num_classes=num_classes,
++            dropout_ratio=0.1,
++            align_corners=False
++        )
+@@ -129,1 +137,3 @@
+-        return lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1
++        # Reordered so finest primary prediction (lateral_map_5) is at index [-1] for fuse_outputs
++        return lateral_map_1, lateral_map_2, lateral_map_3, lateral_map_5
