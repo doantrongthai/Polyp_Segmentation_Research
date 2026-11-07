@@ -1,0 +1,57 @@
+--- vendor/DuAT/lib/DuAT.py
++++ models/duat.py
+@@ -1,16 +1,18 @@
++"""
++DuAT: Dual-Aggregation Transformer Network for Medical Image Segmentation
++PRCV 2023
++Official paper: https://arxiv.org/abs/2212.11677
++Official repository: https://github.com/Barrett-python/DuAT
++"""
++
++import math
++from functools import partial
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+-from lib.pvtv2 import pvt_v2_b2
+-import os
+-from mmcv.cnn import ConvModule
+-from mmcv.cnn import constant_init, kaiming_init
++from timm.models.layers import DropPath, to_2tuple, trunc_normal_
++from models import register_model
+ 
+ 
+-def last_zero_init(m):
+-    if isinstance(m, nn.Sequential):
+-        constant_init(m[-1], val=0)
+-    else:
+-        constant_init(m, val=0)
++@register_model('duat')
++class DuAT(nn.Module):
+@@ -326,11 +328,12 @@
+-class DuAT(nn.Module):
+-    def __init__(self, dim=32, dims= [64, 128, 320, 512]):
++    def __init__(self, dim=32, dims=[64, 128, 320, 512], pretrained=False, checkpoint_path=None):
+         super(DuAT, self).__init__()
+ 
+-        self.backbone = pvt_v2_b2()  # [64, 128, 320, 512]
+-        path = './pretrained_pth/pvt_v2_b2.pth'
+-        save_model = torch.load(path)
+-        model_dict = self.backbone.state_dict()
+-        state_dict = {k: v for k, v in save_model.items() if k in model_dict.keys()}
+-        model_dict.update(state_dict)
+-        self.backbone.load_state_dict(model_dict)
++        self.backbone = PyramidVisionTransformerV2_B2()
++        if checkpoint_path is not None:
++            save_model = torch.load(checkpoint_path, map_location='cpu')
++            model_dict = self.backbone.state_dict()
++            state_dict = {k: v for k, v in save_model.items() if k in model_dict.keys()}
++            model_dict.update(state_dict)
++            self.backbone.load_state_dict(model_dict)
+@@ -370,2 +373,6 @@
+-        return output, output2
++        # Training supervision: [P1, P2]
++        # Eval mode: [P1, P2, P1 + P2], where P1 + P2 is standard fused evaluation map at [-1]
++        if self.training:
++            return [output, output2]
++        return [output, output2, output + output2]
