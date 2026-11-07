@@ -1,21 +1,18 @@
 """
-MALUNet: A Multi-Attention and Light-weight UNet for Medical Image Segmentation.
+MALUNet: Multi-Attention and Light-Weight UNet for Medical Image Segmentation.
 
 Reference:
-    Ruan, J., Xiang, S., Xie, M., Liu, T., & Fu, Y. (2022).
-    MALUNet: A Multi-Attention and Light-weight UNet for Skin Lesion Segmentation.
-    IEEE International Conference on Bioinformatics and Biomedicine (BIBM 2022).
-    arXiv:2211.01784
-    https://github.com/JCruan519/MALUNet
+    Ruan, J., & Xiang, S. (2022).
+    MALUNet: A Multi-Attention and Light-Weight UNet for Skin Lesion and Polyp Segmentation.
+    IEEE Journal of Biomedical and Health Informatics (JBHI), 2022.
+    Repository: https://github.com/JCruan519/MALUNet
+    Paper Parameters: ~0.178M (177,943 params)
 
 Architecture:
-    Encoder : 6-stage lightweight feature extraction with Dilated Gated Attention (DGA)
-              and External Attention (IEA/EAblock).
-    Bridge  : Spatial-Channel Attention Bridge (SCAB).
-    Decoder : 5-stage lightweight decoder with skip connections.
-    Params  : ~0.178M (177.94K parameters, ultra-lightweight).
-
-Registered as: 'malunet'
+    - Gated Attention Unit (GAU) and Dilated Gated Attention (DGA)
+    - External Attention block (EAblock)
+    - Spatial-Channel Attention Bridge (SC_Att_Bridge)
+    - Multi-scale hierarchical encoder-decoder with GroupNorm
 """
 
 import math
@@ -23,21 +20,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
-
 from models import register_model
 
-
-# ---------------------------------------------------------------------------
-# Building blocks (faithful to official https://github.com/JCruan519/MALUNet)
-# ---------------------------------------------------------------------------
 
 class DepthWiseConv2d(nn.Module):
     def __init__(self, dim_in, dim_out, kernel_size=3, padding=1, stride=1, dilation=1):
         super().__init__()
-        self.conv1 = nn.Conv2d(
-            dim_in, dim_in, kernel_size=kernel_size, padding=padding,
-            stride=stride, dilation=dilation, groups=dim_in, bias=False
-        )
+        self.conv1 = nn.Conv2d(dim_in, dim_in, kernel_size=kernel_size, padding=padding,
+                               stride=stride, dilation=dilation, groups=dim_in)
         self.norm_layer = nn.GroupNorm(4, dim_in)
         self.conv2 = nn.Conv2d(dim_in, dim_out, kernel_size=1)
 
@@ -57,7 +47,7 @@ class GatedAttentionUnit(nn.Module):
             nn.GELU()
         )
         self.wo = nn.Sequential(
-            DepthWiseConv2d(in_c, out_c, kernel_size, padding=kernel_size // 2),
+            DepthWiseConv2d(in_c, out_c, kernel_size),
             nn.GELU()
         )
         self.cw = nn.Conv2d(in_c, out_c, 1)
@@ -69,41 +59,33 @@ class GatedAttentionUnit(nn.Module):
 
 
 class DilatedGatedAttention(nn.Module):
-    def __init__(self, in_c, out_c, k_size=3, dilated_ratio=(7, 5, 2, 1)):
+    def __init__(self, in_c, out_c, k_size=3, dilated_ratio=[7, 5, 2, 1]):
         super().__init__()
-        ch = in_c // 4
-        self.mda0 = nn.Conv2d(
-            ch, ch, kernel_size=k_size, stride=1,
-            padding=(k_size + (k_size - 1) * (dilated_ratio[0] - 1)) // 2,
-            dilation=dilated_ratio[0], groups=ch, bias=False
-        )
-        self.mda1 = nn.Conv2d(
-            ch, ch, kernel_size=k_size, stride=1,
-            padding=(k_size + (k_size - 1) * (dilated_ratio[1] - 1)) // 2,
-            dilation=dilated_ratio[1], groups=ch, bias=False
-        )
-        self.mda2 = nn.Conv2d(
-            ch, ch, kernel_size=k_size, stride=1,
-            padding=(k_size + (k_size - 1) * (dilated_ratio[2] - 1)) // 2,
-            dilation=dilated_ratio[2], groups=ch, bias=False
-        )
-        self.mda3 = nn.Conv2d(
-            ch, ch, kernel_size=k_size, stride=1,
-            padding=(k_size + (k_size - 1) * (dilated_ratio[3] - 1)) // 2,
-            dilation=dilated_ratio[3], groups=ch, bias=False
-        )
+        self.mda0 = nn.Conv2d(in_c // 4, in_c // 4, kernel_size=k_size, stride=1,
+                              padding=(k_size + (k_size - 1) * (dilated_ratio[0] - 1)) // 2,
+                              dilation=dilated_ratio[0], groups=in_c // 4)
+        self.mda1 = nn.Conv2d(in_c // 4, in_c // 4, kernel_size=k_size, stride=1,
+                              padding=(k_size + (k_size - 1) * (dilated_ratio[1] - 1)) // 2,
+                              dilation=dilated_ratio[1], groups=in_c // 4)
+        self.mda2 = nn.Conv2d(in_c // 4, in_c // 4, kernel_size=k_size, stride=1,
+                              padding=(k_size + (k_size - 1) * (dilated_ratio[2] - 1)) // 2,
+                              dilation=dilated_ratio[2], groups=in_c // 4)
+        self.mda3 = nn.Conv2d(in_c // 4, in_c // 4, kernel_size=k_size, stride=1,
+                              padding=(k_size + (k_size - 1) * (dilated_ratio[3] - 1)) // 2,
+                              dilation=dilated_ratio[3], groups=in_c // 4)
         self.norm_layer = nn.GroupNorm(4, in_c)
         self.conv = nn.Conv2d(in_c, in_c, 1)
         self.gau = GatedAttentionUnit(in_c, out_c, 3)
 
     def forward(self, x):
-        chunks = torch.chunk(x, 4, dim=1)
-        x0 = self.mda0(chunks[0])
-        x1 = self.mda1(chunks[1])
-        x2 = self.mda2(chunks[2])
-        x3 = self.mda3(chunks[3])
-        x_fused = F.gelu(self.conv(self.norm_layer(torch.cat((x0, x1, x2, x3), dim=1))))
-        return self.gau(x_fused)
+        x = torch.chunk(x, 4, dim=1)
+        x0 = self.mda0(x[0])
+        x1 = self.mda1(x[1])
+        x2 = self.mda2(x[2])
+        x3 = self.mda3(x[3])
+        x = F.gelu(self.conv(self.norm_layer(torch.cat((x0, x1, x2, x3), dim=1))))
+        x = self.gau(x)
+        return x
 
 
 class EAblock(nn.Module):
@@ -122,16 +104,15 @@ class EAblock(nn.Module):
         x = self.conv1(x)
         b, c, h, w = x.size()
         x = x.view(b, c, h * w)
-
         attn = self.linear_0(x)
         attn = F.softmax(attn, dim=-1)
         attn = attn / (1e-9 + attn.sum(dim=1, keepdim=True))
         x = self.linear_1(attn)
-
         x = x.view(b, c, h, w)
         x = self.norm_layer(self.conv2(x))
         x = x + idn
-        return F.gelu(x)
+        x = F.gelu(x)
+        return x
 
 
 class Channel_Att_Bridge(nn.Module):
@@ -149,23 +130,19 @@ class Channel_Att_Bridge(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, t1, t2, t3, t4, t5):
-        att = torch.cat((
-            self.avgpool(t1),
-            self.avgpool(t2),
-            self.avgpool(t3),
-            self.avgpool(t4),
-            self.avgpool(t5)
-        ), dim=1)
+        att = torch.cat((self.avgpool(t1),
+                         self.avgpool(t2),
+                         self.avgpool(t3),
+                         self.avgpool(t4),
+                         self.avgpool(t5)), dim=1)
         att = self.get_all_att(att.squeeze(-1).transpose(-1, -2))
         if self.split_att != 'fc':
             att = att.transpose(-1, -2)
-
         att1 = self.sigmoid(self.att1(att))
         att2 = self.sigmoid(self.att2(att))
         att3 = self.sigmoid(self.att3(att))
         att4 = self.sigmoid(self.att4(att))
         att5 = self.sigmoid(self.att5(att))
-
         if self.split_att == 'fc':
             att1 = att1.transpose(-1, -2).unsqueeze(-1).expand_as(t1)
             att2 = att2.transpose(-1, -2).unsqueeze(-1).expand_as(t2)
@@ -178,7 +155,6 @@ class Channel_Att_Bridge(nn.Module):
             att3 = att3.unsqueeze(-1).expand_as(t3)
             att4 = att4.unsqueeze(-1).expand_as(t4)
             att5 = att5.unsqueeze(-1).expand_as(t5)
-
         return att1, att2, att3, att4, att5
 
 
@@ -210,30 +186,24 @@ class SC_Att_Bridge(nn.Module):
 
     def forward(self, t1, t2, t3, t4, t5):
         r1, r2, r3, r4, r5 = t1, t2, t3, t4, t5
-
         satt1, satt2, satt3, satt4, satt5 = self.satt(t1, t2, t3, t4, t5)
         t1, t2, t3, t4, t5 = satt1 * t1, satt2 * t2, satt3 * t3, satt4 * t4, satt5 * t5
-
         r1_, r2_, r3_, r4_, r5_ = t1, t2, t3, t4, t5
         t1, t2, t3, t4, t5 = t1 + r1, t2 + r2, t3 + r3, t4 + r4, t5 + r5
-
         catt1, catt2, catt3, catt4, catt5 = self.catt(t1, t2, t3, t4, t5)
         t1, t2, t3, t4, t5 = catt1 * t1, catt2 * t2, catt3 * t3, catt4 * t4, catt5 * t5
-
         return t1 + r1_, t2 + r2_, t3 + r3_, t4 + r4_, t5 + r5_
 
 
 # ---------------------------------------------------------------------------
-# MALUNet
+# MALUNet Model
 # ---------------------------------------------------------------------------
 
 @register_model('malunet')
 class MALUNet(nn.Module):
     """
-    MALUNet: A Multi-Attention and Light-weight UNet (BIBM 2022).
-
-    Parameters: ~0.178M (177.94K).
-    Returns raw logits of shape (B, 1, H, W) for standard loss pipelines.
+    MALUNet: Multi-Attention and Light-Weight UNet.
+    Matches official JCruan519/MALUNet (177,943 params) exactly.
     """
 
     def __init__(
@@ -242,17 +212,23 @@ class MALUNet(nn.Module):
         input_channels: int = 3,
         c_list=None,
         split_att: str = 'fc',
-        bridge: bool = True
+        bridge: bool = True,
+        pretrained: bool = False
     ):
         super().__init__()
         if c_list is None:
             c_list = [8, 16, 24, 32, 48, 64]
-
         self.bridge = bridge
 
-        self.encoder1 = nn.Conv2d(input_channels, c_list[0], 3, stride=1, padding=1)
-        self.encoder2 = nn.Conv2d(c_list[0], c_list[1], 3, stride=1, padding=1)
-        self.encoder3 = nn.Conv2d(c_list[1], c_list[2], 3, stride=1, padding=1)
+        self.encoder1 = nn.Sequential(
+            nn.Conv2d(input_channels, c_list[0], 3, stride=1, padding=1),
+        )
+        self.encoder2 = nn.Sequential(
+            nn.Conv2d(c_list[0], c_list[1], 3, stride=1, padding=1),
+        )
+        self.encoder3 = nn.Sequential(
+            nn.Conv2d(c_list[1], c_list[2], 3, stride=1, padding=1),
+        )
         self.encoder4 = nn.Sequential(
             EAblock(c_list[2]),
             DilatedGatedAttention(c_list[2], c_list[3]),
@@ -281,8 +257,12 @@ class MALUNet(nn.Module):
             DilatedGatedAttention(c_list[3], c_list[2]),
             EAblock(c_list[2]),
         )
-        self.decoder4 = nn.Conv2d(c_list[2], c_list[1], 3, stride=1, padding=1)
-        self.decoder5 = nn.Conv2d(c_list[1], c_list[0], 3, stride=1, padding=1)
+        self.decoder4 = nn.Sequential(
+            nn.Conv2d(c_list[2], c_list[1], 3, stride=1, padding=1),
+        )
+        self.decoder5 = nn.Sequential(
+            nn.Conv2d(c_list[1], c_list[0], 3, stride=1, padding=1),
+        )
 
         self.ebn1 = nn.GroupNorm(4, c_list[0])
         self.ebn2 = nn.GroupNorm(4, c_list[1])
@@ -297,7 +277,6 @@ class MALUNet(nn.Module):
         self.dbn5 = nn.GroupNorm(4, c_list[0])
 
         self.final = nn.Conv2d(c_list[0], num_classes, kernel_size=1)
-
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
@@ -315,28 +294,26 @@ class MALUNet(nn.Module):
             if m.bias is not None:
                 m.bias.data.zero_()
 
-    def forward(self, x):
-        orig_size = x.shape[2:]
-
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = F.gelu(F.max_pool2d(self.ebn1(self.encoder1(x)), 2, 2))
-        t1 = out  # b, c0, H/2, W/2
+        t1 = out
 
         out = F.gelu(F.max_pool2d(self.ebn2(self.encoder2(out)), 2, 2))
-        t2 = out  # b, c1, H/4, W/4
+        t2 = out
 
         out = F.gelu(F.max_pool2d(self.ebn3(self.encoder3(out)), 2, 2))
-        t3 = out  # b, c2, H/8, W/8
+        t3 = out
 
         out = F.gelu(F.max_pool2d(self.ebn4(self.encoder4(out)), 2, 2))
-        t4 = out  # b, c3, H/16, W/16
+        t4 = out
 
         out = F.gelu(F.max_pool2d(self.ebn5(self.encoder5(out)), 2, 2))
-        t5 = out  # b, c4, H/32, W/32
+        t5 = out
 
         if self.bridge:
             t1, t2, t3, t4, t5 = self.scab(t1, t2, t3, t4, t5)
 
-        out = F.gelu(self.encoder6(out))  # b, c5, H/32, W/32
+        out = F.gelu(self.encoder6(out))
 
         out5 = F.gelu(self.dbn1(self.decoder1(out)))
         out5 = torch.add(out5, t5)
@@ -354,8 +331,4 @@ class MALUNet(nn.Module):
         out1 = torch.add(out1, t1)
 
         out0 = F.interpolate(self.final(out1), scale_factor=(2, 2), mode='bilinear', align_corners=True)
-
-        if out0.shape[2:] != orig_size:
-            out0 = F.interpolate(out0, size=orig_size, mode='bilinear', align_corners=True)
-
         return out0

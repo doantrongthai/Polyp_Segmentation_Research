@@ -118,9 +118,9 @@ class HarDNet68(nn.Module):
 # ---------------------------------------------------------------------------
 
 class BasicConv2d(nn.Module):
-    def __init__(self, in_planes: int, out_planes: int, kernel_size: int, stride: int = 1, padding: int = 0):
+    def __init__(self, in_planes: int, out_planes: int, kernel_size: int, stride: int = 1, padding: int = 0, dilation: int = 1):
         super().__init__()
-        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=False)
+        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, bias=False)
         self.bn = nn.BatchNorm2d(out_planes)
         self.relu = nn.ReLU(inplace=True)
 
@@ -137,22 +137,19 @@ class RFB_modified(nn.Module):
             BasicConv2d(in_channel, out_channel, 1),
             BasicConv2d(out_channel, out_channel, kernel_size=(1, 3), padding=(0, 1)),
             BasicConv2d(out_channel, out_channel, kernel_size=(3, 1), padding=(1, 0)),
-            nn.Conv2d(out_channel, out_channel, 3, padding=3, dilation=3, bias=False),
-            nn.BatchNorm2d(out_channel)
+            BasicConv2d(out_channel, out_channel, 3, padding=3, dilation=3)
         )
         self.branch2 = nn.Sequential(
             BasicConv2d(in_channel, out_channel, 1),
             BasicConv2d(out_channel, out_channel, kernel_size=(1, 5), padding=(0, 2)),
             BasicConv2d(out_channel, out_channel, kernel_size=(5, 1), padding=(2, 0)),
-            nn.Conv2d(out_channel, out_channel, 3, padding=5, dilation=5, bias=False),
-            nn.BatchNorm2d(out_channel)
+            BasicConv2d(out_channel, out_channel, 3, padding=5, dilation=5)
         )
         self.branch3 = nn.Sequential(
             BasicConv2d(in_channel, out_channel, 1),
             BasicConv2d(out_channel, out_channel, kernel_size=(1, 7), padding=(0, 3)),
             BasicConv2d(out_channel, out_channel, kernel_size=(7, 1), padding=(3, 0)),
-            nn.Conv2d(out_channel, out_channel, 3, padding=7, dilation=7, bias=False),
-            nn.BatchNorm2d(out_channel)
+            BasicConv2d(out_channel, out_channel, 3, padding=7, dilation=7)
         )
         self.conv_cat = BasicConv2d(4 * out_channel, out_channel, 3, padding=1)
         self.conv_res = BasicConv2d(in_channel, out_channel, 1)

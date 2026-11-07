@@ -113,6 +113,11 @@ class Trainer:
                     bs = images.size(0)
                     loss_record.update(loss.item(), bs)
                     if isinstance(outputs, (tuple, list)) and len(outputs) == 4:
+                        with torch.no_grad():
+                            l5 = self.loss_fn(outputs[0], scaled_gts)
+                            l4 = self.loss_fn(outputs[1], scaled_gts)
+                            l3 = self.loss_fn(outputs[2], scaled_gts)
+                            l2 = self.loss_fn(outputs[3], scaled_gts)
                         loss_record2.update(l2.item(), bs)
                         loss_record3.update(l3.item(), bs)
                         loss_record4.update(l4.item(), bs)

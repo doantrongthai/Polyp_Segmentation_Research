@@ -5,6 +5,7 @@ Reference:
     Dong, B., Wang, W., Deng, D. P., Zhou, T., Shen, J., & Shao, L. (2023).
     Polyp-PVT: Polyp Segmentation with Pyramid Vision Transformer.
     CAAI Transactions on Intelligence Technology, 8(4), 989-1002.
+    Repository: https://github.com/DengPingFan/Polyp-PVT
 
 Architecture:
     Encoder: PVTv2-B2 (Pyramid Vision Transformer v2)
@@ -13,8 +14,8 @@ Architecture:
         - CFM: Cascaded Feature Fusion Module (multi-scale feature aggregation)
         - SAM: Similarity-Aggregation Module (graph convolution reasoning)
     Outputs:
-        - prediction1_8: Output from CFM (coarse map, upsampled to input size)
-        - prediction2_8: Output from SAM (fine boundary map, upsampled to input size)
+        - Train: prediction1_8 (CFM), prediction2_8 (SAM)
+        - Eval: prediction1_8, prediction2_8, prediction1_8 + prediction2_8 (finest fused test map)
 """
 
 import torch
@@ -29,14 +30,16 @@ from models import register_model
 # ---------------------------------------------------------------------------
 
 class BasicConv2d(nn.Module):
-    def __init__(self, in_planes: int, out_planes: int, kernel_size: int, stride: int = 1, padding: int = 0):
+    def __init__(self, in_planes: int, out_planes: int, kernel_size: int, stride: int = 1, padding: int = 0, dilation: int = 1):
         super().__init__()
-        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=False)
+        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, bias=False)
         self.bn = nn.BatchNorm2d(out_planes)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.relu(self.bn(self.conv(x)))
+        x = self.conv(x)
+        x = self.bn(x)
+        return x
 
 
 class CFM(nn.Module):
@@ -88,8 +91,9 @@ class GCN(nn.Module):
 
 class SAM(nn.Module):
     """Similarity-Aggregation Module with GCN."""
-    def __init__(self, num_in: int = 32, plane_mid: int = 16, mids: int = 4):
+    def __init__(self, num_in: int = 32, plane_mid: int = 16, mids: int = 4, normalize: bool = False):
         super().__init__()
+        self.normalize = normalize
         self.num_s = int(plane_mid)
         self.num_n = mids * mids
         self.priors = nn.AdaptiveAvgPool2d(output_size=(mids + 2, mids + 2))
@@ -103,21 +107,20 @@ class SAM(nn.Module):
         edge = F.interpolate(edge, (x.size(-2), x.size(-1)), mode='bilinear', align_corners=False)
         n = x.size(0)
 
-        # Soft edge guidance (1 channel for spatial attention weighting)
-        if edge.size(1) > 1:
-            edge = torch.mean(edge, dim=1, keepdim=True)
-        edge_weight = torch.sigmoid(edge)
+        edge = F.softmax(edge, dim=1)[:, 1, :, :].unsqueeze(1)
 
         x_state_reshaped = self.conv_state(x).view(n, self.num_s, -1)
         x_proj = self.conv_proj(x)
-        x_mask = x_proj * edge_weight
+        x_mask = x_proj * edge
 
         x_anchor = self.priors(x_mask)[:, :, 1:-1, 1:-1].reshape(n, self.num_s, -1)
 
         x_proj_reshaped = torch.matmul(x_anchor.permute(0, 2, 1), x_proj.reshape(n, self.num_s, -1))
-        x_proj_reshaped = torch.softmax(x_proj_reshaped, dim=1)
+        x_proj_reshaped = F.softmax(x_proj_reshaped, dim=1)
 
         x_n_state = torch.matmul(x_state_reshaped, x_proj_reshaped.permute(0, 2, 1))
+        if self.normalize:
+            x_n_state = x_n_state * (1. / x_state_reshaped.size(2))
         x_n_rel = self.gcn(x_n_state)
 
         x_state_reshaped = torch.matmul(x_n_rel, x_proj_reshaped)
@@ -178,8 +181,8 @@ class PolypPVT(nn.Module):
         self.SAM = SAM(num_in=channel)
 
         self.down05 = nn.Upsample(scale_factor=0.5, mode='bilinear', align_corners=True)
-        self.out_CFM = nn.Conv2d(channel, 1, 1)
         self.out_SAM = nn.Conv2d(channel, 1, 1)
+        self.out_CFM = nn.Conv2d(channel, 1, 1)
 
     def forward(self, x: torch.Tensor):
         # Backbone yields 4 pyramid levels
@@ -207,5 +210,6 @@ class PolypPVT(nn.Module):
         prediction1_8 = F.interpolate(prediction1, scale_factor=8, mode='bilinear', align_corners=False)
         prediction2_8 = F.interpolate(prediction2, scale_factor=8, mode='bilinear', align_corners=False)
 
-        # Return multi-supervision outputs: coarse (CFM) and fine (SAM)
-        return prediction1_8, prediction2_8
+        if self.training:
+            return prediction1_8, prediction2_8
+        return prediction1_8, prediction2_8, prediction1_8 + prediction2_8
