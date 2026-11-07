@@ -238,16 +238,18 @@ class ResNet(nn.Module):
         return [x1, x2, x3, x4]
 
 
-def res2net50_v1b_26w_4s(pretrained: bool = True) -> ResNet:
+def res2net50_v1b_26w_4s(pretrained: bool = True, num_classes: int = 0) -> ResNet:
     """Res2Net-50 v1b with baseWidth=26 and scale=4.
 
     Args:
         pretrained: If ``True``, load ImageNet-pretrained weights.
+        num_classes: Number of classification classes (0 = backbone-only for segmentation,
+                     1000 = upstream full network including classification head).
 
     Returns:
         ``ResNet`` model instance.
     """
-    model = ResNet(Bottle2neck, [3, 4, 6, 3], baseWidth=26, scale=4)
+    model = ResNet(Bottle2neck, [3, 4, 6, 3], baseWidth=26, scale=4, num_classes=num_classes)
 
     if pretrained:
         url = _PRETRAINED_URLS["res2net50_v1b_26w_4s"]

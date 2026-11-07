@@ -1,0 +1,33 @@
+--- vendor/C2FNet/lib/C2FNet.py
++++ models/c2fnet.py
+@@ -1,8 +1,22 @@
++"""
++C2FNet: Context-aware Cross-level Fusion Network for Camouflaged Object / Polyp Segmentation.
++
++Reference:
++    Sun, Y., Chen, G., Zhou, T., Zhang, Y., & Liu, N. (2021).
++    Context-aware Cross-level Fusion Network for Camouflaged Object Detection.
++    IJCAI 2021, pp. 1025-1031.
++    IEEE TCSVT 2022.
++    Official Repository: https://github.com/thograce/C2FNet
++"""
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+-from .Res2Net_v1b import res2net50_v1b_26w_4s
+-from utils.tensor_ops import cus_sample, upsample_add
++from models._backbone.res2net import res2net50_v1b_26w_4s
++from models import register_model
+@@ -148,6 +162,8 @@
++@register_model("c2fnet")
+ class C2FNet(nn.Module):
+     # res2net based encoder decoder
+-    def __init__(self, channel=64):
++    def __init__(self, channel: int = 64, num_classes: int = 1, pretrained: bool = False, **kwargs):
+         super(C2FNet, self).__init__()
+         # ---- ResNet Backbone ----
+-        self.resnet = res2net50_v1b_26w_4s(pretrained=True)
++        self.resnet = res2net50_v1b_26w_4s(pretrained=pretrained, num_classes=1000)
+@@ -168,3 +184,3 @@
+-        self.classifier = nn.Conv2d(64, 1, 1)
++        self.classifier = nn.Conv2d(channel, num_classes, 1)
