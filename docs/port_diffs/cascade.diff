@@ -1,0 +1,43 @@
+--- vendor/CASCADE/lib/networks.py
++++ models/cascade.py
+@@ -1,13 +1,24 @@
++"""
++CASCADE: Context-Aware Synergistic Cascaded Network for Medical Image Segmentation.
++
++Reference:
++    Rahman, M. M., & Marculescu, R. (2023).
++    CASCADE: Context-Aware Synergistic Cascaded Network for Medical Image Segmentation.
++    IEEE WACV 2023, pp. 2488-2497.
++    Official Repository: https://github.com/SLDGroup/CASCADE
++"""
+ import os
+ import numpy as np
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+ 
+-from lib.pvtv2 import pvt_v2_b2
+-from lib.decoders import CASCADE
+-from lib.cnn_vit_backbone import Transformer, SegmentationHead
++from models._backbone.pvt_v2 import pvt_v2_b2
++from models import register_model
+@@ -23,17 +34,20 @@
++@register_model("cascade")
++@register_model("pvt_cascade")
+ class PVT_CASCADE(nn.Module):
+-    def __init__(self, n_class=1):
++    def __init__(self, num_classes: int = 1, pretrained: bool = False, in_channels: int = 3, **kwargs):
+         super(PVT_CASCADE, self).__init__()
+ 
+         # conv block to convert single channel to 3 channels
+         self.conv = nn.Sequential(
+             nn.Conv2d(1, 3, kernel_size=1),
+             nn.BatchNorm2d(3),
+             nn.ReLU(inplace=True)
+         )
+         
+         # backbone network initialization with pretrained weight
+-        self.backbone = pvt_v2_b2()  # [64, 128, 320, 512]
+-        path = './pretrained_pth/pvt/pvt_v2_b2.pth'
+-        save_model = torch.load(path)
++        self.backbone = pvt_v2_b2(pretrained=pretrained, num_classes=0)
