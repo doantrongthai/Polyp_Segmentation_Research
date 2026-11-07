@@ -1,0 +1,56 @@
+--- vendor/DoubleUNet/doubleunet_pytorch.py
++++ models/double_unet.py
+@@ -1,6 +1,28 @@
++"""
++DoubleU-Net: A Deep Convolutional Neural Network for Medical Image Segmentation.
++
++Reference:
++    Jha, D., Smedsrud, P. H., Riegler, M. A., Johansen, D., De Lange, T., Halvorsen, P.,
++    & Johansen, H. D. (2020).
++    DoubleU-Net: A Deep Convolutional Neural Network for Medical Image Segmentation.
++    IEEE CBMS 2020, pp. 558-563.
++    Official Repository: https://github.com/DebeshJha/2020-CBMS-DoubleU-Net
++"""
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+ from torchvision.models import vgg19
++try:
++    from torchvision.models import VGG19_Weights
++    HAS_VGG_WEIGHTS = True
++except ImportError:
++    HAS_VGG_WEIGHTS = False
++
++from models import register_model
+@@ -93,7 +115,18 @@
+-class encoder1(nn.Module):
+-    def __init__(self):
+-        super().__init__()
+-        network = vgg19(pretrained=True)
++class encoder1(nn.Module):
++    def __init__(self, pretrained: bool = False):
++        super().__init__()
++        if pretrained:
++            if HAS_VGG_WEIGHTS:
++                network = vgg19(weights=VGG19_Weights.DEFAULT)
++            else:
++                network = vgg19(pretrained=True)
++        else:
++            if HAS_VGG_WEIGHTS:
++                network = vgg19(weights=None)
++            else:
++                network = vgg19(pretrained=False)
+@@ -204,8 +237,10 @@
+-class build_doubleunet(nn.Module):
+-    def __init__(self):
++@register_model("double_unet")
++@register_model("doubleunet")
++class DoubleUNet(nn.Module):
++    def __init__(self, in_channels: int = 3, num_classes: int = 1, pretrained: bool = False, **kwargs):
+         super().__init__()
+-        self.e1 = encoder1()
++        self.e1 = encoder1(pretrained=pretrained)
+         self.a1 = ASPP(512, 64)
+         self.d1 = decoder1()
+-        self.y1 = nn.Conv2d(32, 1, kernel_size=1, padding=0)
++        self.y1 = nn.Conv2d(32, num_classes, kernel_size=1, padding=0)
