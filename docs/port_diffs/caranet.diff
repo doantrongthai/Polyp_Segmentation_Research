@@ -1,0 +1,30 @@
+--- vendor/CaraNet/CaraNet.py
++++ models/caranet.py
+@@ -11,10 +11,10 @@
+-from pretrain.Res2Net_v1b import res2net50_v1b_26w_4s, res2net101_v1b_26w_4s
+-from lib.conv_layer import Conv, BNPReLU
+-from lib.axial_atten import AA_kernel
+-from lib.context_module import CFPModule
+-from lib.partial_decoder import aggregation
++from models import register_model
++from models._backbone.res2net import res2net101_v1b_26w_4s
+ 
+-class caranet(nn.Module):
+-    def __init__(self, channel=32):
++@register_model("caranet")
++class CaraNet(nn.Module):
++    def __init__(self, channel: int = 32, pretrained: bool = True):
+         super().__init__()
+-        self.resnet = res2net101_v1b_26w_4s(pretrained=True)
++        self.resnet = res2net101_v1b_26w_4s(pretrained=pretrained, num_classes=1000)
+ 
+@@ -130,2 +130,3 @@
+-        return lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1
++        # Reorder to (coarse -> fine): primary finest prediction (lateral_map_5) at [-1]
++        return lateral_map_1, lateral_map_2, lateral_map_3, lateral_map_5
+
+DEVIATION REASONS:
+1. Imports: Relocated backbone loading to models._backbone.res2net to avoid hardcoded Windows paths ('D:/HarDNet-MSEG-master/...') and enable CPU map_location.
+2. Registration: Added @register_model("caranet") decorator for dynamic discovery.
+3. Output Ordering: Upstream returns (lateral_map_5, lateral_map_3, lateral_map_2, lateral_map_1). Reordered to (lateral_map_1, lateral_map_2, lateral_map_3, lateral_map_5) so finest prediction is at index -1, conforming with split_model_output and fuse_outputs.
+4. Parameter Preservation: Passed num_classes=1000 to res2net101_v1b_26w_4s to retain the exact 46,642,560 parameters and 1:1 state_dict key match of the official repo.

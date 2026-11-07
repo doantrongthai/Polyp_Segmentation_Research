@@ -17,11 +17,14 @@ try:
 except ImportError:
     from torch.utils.model_zoo import load_url as load_state_dict_from_url
 
-__all__ = ["res2net50_v1b_26w_4s"]
+__all__ = ["res2net50_v1b_26w_4s", "res2net101_v1b_26w_4s"]
 
 _PRETRAINED_URLS = {
     "res2net50_v1b_26w_4s": (
         "https://shanghuagao.oss-cn-beijing.aliyuncs.com/res2net/res2net50_v1b_26w_4s-3cf99910.pth"
+    ),
+    "res2net101_v1b_26w_4s": (
+        "https://shanghuagao.oss-cn-beijing.aliyuncs.com/res2net/res2net101_v1b_26w_4s-0812c246.pth"
     ),
 }
 
@@ -135,6 +138,7 @@ class ResNet(nn.Module):
         layers: list[int],
         baseWidth: int = 26,
         scale: int = 4,
+        num_classes: int = 0,
     ) -> None:
         super().__init__()
         self.inplanes = 64
@@ -159,6 +163,10 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+
+        if num_classes > 0:
+            self.avgpool = nn.AdaptiveAvgPool2d(1)
+            self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         # Weight init
         for m in self.modules():
@@ -256,6 +264,36 @@ def res2net50_v1b_26w_4s(pretrained: bool = True) -> ResNet:
         if missing:
             print(f"[Backbone] {len(missing)} keys not loaded (expected for v1b stem): "
                   f"{sorted(missing)[:5]} ...")
+        model_sd.update(new_sd)
+        model.load_state_dict(model_sd, strict=False)
+        print("[Backbone] Pretrained weights loaded.")
+    return model
+
+
+def res2net101_v1b_26w_4s(pretrained: bool = True, num_classes: int = 1000) -> ResNet:
+    """Res2Net-101 v1b with baseWidth=26 and scale=4.
+
+    Args:
+        pretrained: If ``True``, load ImageNet-pretrained weights.
+        num_classes: Number of classes for final FC head (1000 for official CaraNet upstream).
+
+    Returns:
+        ``ResNet`` model instance.
+    """
+    model = ResNet(Bottle2neck, [3, 4, 23, 3], baseWidth=26, scale=4, num_classes=num_classes)
+
+    if pretrained:
+        url = _PRETRAINED_URLS["res2net101_v1b_26w_4s"]
+        print(f"[Backbone] Loading pretrained Res2Net-101 v1b from:\n  {url}")
+        state_dict = load_state_dict_from_url(url, progress=True, map_location="cpu")
+        model_sd = model.state_dict()
+        new_sd = {}
+        for k, v in state_dict.items():
+            if k in model_sd and model_sd[k].shape == v.shape:
+                new_sd[k] = v
+        missing = set(model_sd.keys()) - set(new_sd.keys())
+        if missing:
+            print(f"[Backbone] {len(missing)} keys not loaded: {sorted(missing)[:5]} ...")
         model_sd.update(new_sd)
         model.load_state_dict(model_sd, strict=False)
         print("[Backbone] Pretrained weights loaded.")
