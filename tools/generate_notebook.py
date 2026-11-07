@@ -86,18 +86,18 @@ cells.append({
     'source': [line + '\n' for line in setup_code.split('\n')]
 })
 
-# Clean model cells matching edanet.ipynb
+# Clean model cells using integrated run.py pipeline
 for idx, (m_id, m_desc) in enumerate(models_catalog, 1):
     m_cell_code = f"""# ==============================================================================
 # [{idx:02d}/31] MODEL: {m_id.upper()} ({m_desc}) - Seed 0
 # ==============================================================================
-!python train.py --model {m_id} --loss structure_loss --seed 0
+!python run.py --model {m_id} --seed 0
 
-!python visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5
-
-!zip -q -r /content/PolypSeg_{m_id}_seed0.zip snapshots/{m_id}/ results/{m_id}/ visualizations/{m_id}/ logs/{m_id}/
 from google.colab import files
-files.download('/content/PolypSeg_{m_id}_seed0.zip')
+import os
+zip_file = "/content/PolypSeg_{m_id}_seed0.zip"
+if os.path.exists(zip_file):
+    files.download(zip_file)
 """
     cells.append({
         'cell_type': 'code',

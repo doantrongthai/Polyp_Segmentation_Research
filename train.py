@@ -146,45 +146,59 @@ def main():
     print(f"[Init] Optimizer: {opt_name} | lr={args.lr}")
     print(f"\n[Train] Starting training from epoch {start_epoch} to {args.epochs}...")
 
-    for epoch in range(start_epoch, args.epochs + 1):
+    oom_error_class = getattr(torch.cuda, 'OutOfMemoryError', RuntimeError)
+    try:
+        for epoch in range(start_epoch, args.epochs + 1):
+            train_stats = trainer.train_one_epoch(train_loader, epoch)
+            val_metrics = trainer.validate(val_loader, val_evaluator)
+            logger.log(epoch, train_stats, val_metrics)
+            checkpointer.save(model, optimizer, epoch, val_metrics)
 
-        train_stats = trainer.train_one_epoch(train_loader, epoch)
-        val_metrics = trainer.validate(val_loader, val_evaluator)
-        logger.log(epoch, train_stats, val_metrics)
-        checkpointer.save(model, optimizer, epoch, val_metrics)
+        logger.close()
 
-    logger.close()
+        # 9. Final Cross-Dataset Evaluation on Best Checkpoint
+        best_weights = checkpointer.get_best_path()
+        if os.path.exists(best_weights):
+            print(f"\n============================================================")
+            print(f"RUNNING FINAL BENCHMARK & EDGE AI EVALUATION ON BEST MODEL: {best_weights}")
+            print(f"============================================================")
+            Checkpointer.load(model, best_weights, device=device)
+            evaluator = Evaluator(
+                data_root=data_root,
+                model=model,
+                device=device,
+                testsize=args.trainsize,
+                model_name=args.model,
+                weights_path=best_weights
+            )
+            results_dir = os.path.join('./results', args.model)
 
-    # 8. Final Cross-Dataset Evaluation on Best Checkpoint
-    best_weights = checkpointer.get_best_path()
-    if os.path.exists(best_weights):
-        print(f"\n============================================================")
-        print(f"RUNNING FINAL BENCHMARK & EDGE AI EVALUATION ON BEST MODEL: {best_weights}")
-        print(f"============================================================")
-        Checkpointer.load(model, best_weights, device=device)
-        evaluator = Evaluator(
-            data_root=data_root,
-            model=model,
-            device=device,
-            testsize=args.trainsize,
-            model_name=args.model,
-            weights_path=best_weights
-        )
-        results_dir = os.path.join('./results', args.model)
+            # 1. Edge AI Deployment Profiling (Params, FLOPs, Latency, FPS, Peak Memory)
+            print(f"\n[Evaluation] Profiling Edge AI & Hardware efficiency...")
+            efficiency = evaluator.benchmark_efficiency(measure_cpu=True)
 
-        # 1. Edge AI Deployment Profiling (Params, FLOPs, Latency, FPS, Peak Memory)
-        print(f"\n[Evaluation] Profiling Edge AI & Hardware efficiency...")
-        efficiency = evaluator.benchmark_efficiency(measure_cpu=True)
+            # 2. Benchmark accuracy across all 5 test sets
+            results = evaluator.evaluate_all(save_results_dir=results_dir)
 
-        # 2. Benchmark accuracy across all 5 test sets
-        results = evaluator.evaluate_all(save_results_dir=results_dir)
+            # 3. Print & save both Accuracy and Hardware metrics
+            evaluator.print_table(results, efficiency=efficiency, model_name=args.model)
+            evaluator.save_csv(results, path=os.path.join(results_dir, 'metrics.csv'), efficiency=efficiency)
+            evaluator.save_latex(results, path=os.path.join(results_dir, 'metrics.tex'), efficiency=efficiency)
 
-        # 3. Print & save both Accuracy and Hardware metrics
-        evaluator.print_table(results, efficiency=efficiency, model_name=args.model)
-        evaluator.save_csv(results, path=os.path.join(results_dir, 'metrics.csv'), efficiency=efficiency)
-        evaluator.save_latex(results, path=os.path.join(results_dir, 'metrics.tex'), efficiency=efficiency)
+        print("\n[Done] Training and benchmark evaluation complete.")
 
-    print("\n[Done] Training and benchmark evaluation complete.")
+    except (oom_error_class, RuntimeError) as e:
+        if "out of memory" in str(e).lower() or isinstance(e, oom_error_class):
+            print(f"\n============================================================")
+            print(f"⚠️ [CUDA OOM DETECTED] Model '{args.model}' exceeded GPU VRAM capacity!")
+            print(f"Details: {e}")
+            print(f"👉 GPU VRAM flushed. Exiting cleanly (exit code 0) so execution queues continue.")
+            print(f"============================================================\n")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            return
+        else:
+            raise e
 
 
 if __name__ == '__main__':
