@@ -1,0 +1,56 @@
+--- vendor/TransFuse/lib/TransFuse.py
++++ models/transfuse.py
+@@ -1,15 +1,18 @@
++"""
++TransFuse: Fusing Transformers and CNNs for Medical Image Segmentation
++MICCAI 2021
++Official paper: https://arxiv.org/abs/2102.08005
++Official repository: https://github.com/Rayicer/TransFuse
++"""
++
++import math
++from functools import partial
+ import torch
+ import torch.nn as nn
+-from torchvision.models import resnet34
+-from torchvision.models import resnet50
+-from .DeiT import deit_small_patch16_224 as deit
+-from .DeiT import deit_base_patch16_224 as deit_base
+-from .DeiT import deit_base_patch16_384 as deit_base_384
+-from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
+ import torch.nn.functional as F
+-import numpy as np
+-import math
++from torchvision.models import resnet34, ResNet34_Weights
+ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
++from models import register_model
+ 
+ 
+-class TransFuse_S(nn.Module):
++@register_model('transfuse')
++@register_model('transfuse_s')
++class TransFuse_S(nn.Module):
+@@ -78,13 +80,14 @@
+-        self.resnet = resnet34()
+-        if pretrained:
+-            self.resnet.load_state_dict(torch.load('pretrained/resnet34-333f7ec4.pth'))
++        self.resnet = resnet34(weights=ResNet34_Weights.DEFAULT if pretrained else None)
+         self.resnet.fc = nn.Identity()
+         self.resnet.layer4 = nn.Identity()
+ 
+-        self.transformer = deit(pretrained=pretrained)
++        self.transformer = DeiT_S()
+@@ -118,5 +121,9 @@
+     def forward(self, imgs, labels=None):
++        B, C, H, W = imgs.shape
++        h_p, w_p = H // 16, W // 16
+         # bottom-up path
+         x_b = self.transformer(imgs)
+         x_b = torch.transpose(x_b, 1, 2)
+-        x_b = x_b.view(x_b.shape[0], -1, 12, 16)
++        x_b = x_b.view(x_b.shape[0], -1, h_p, w_p)
+@@ -158,2 +165,3 @@
+         map_2 = F.interpolate(self.final_2(x_c_2), scale_factor=4, mode='bilinear', align_corners=True)
+-        return map_x, map_1, map_2
++        # Expose primary evaluation map at outputs[-1]
++        return [map_x, map_1, map_2]
