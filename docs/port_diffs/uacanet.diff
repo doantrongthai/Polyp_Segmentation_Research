@@ -1,0 +1,48 @@
+--- vendor/UACANet/lib/UACANet.py
++++ models/uacanet.py
+@@ -1,15 +1,18 @@
++"""
++UACANet: Uncertainty-Augmented Context Attention for Polyp Segmentation
++ACM MM 2021
++Official paper: https://dl.acm.org/doi/10.1145/3474085.3475253
++Official repository: https://github.com/plemeri/UACANet
++"""
++
++import math
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+-import numpy as np
++from models import register_model
+ 
+ 
+-class UACANet(nn.Module):
++@register_model('uacanet')
++@register_model('uacanet_s')
++class UACANet(nn.Module):
+@@ -16,4 +18,4 @@
+-    def __init__(self, channels=256, output_stride=16, pretrained=True):
++    def __init__(self, channels=32, output_stride=32, pretrained=False):
+@@ -35,5 +37,8 @@
+     def forward(self, sample):
+-        x = sample['image']
++        if isinstance(sample, dict):
++            x = sample['image']
++        else:
++            x = sample
+@@ -71,13 +76,2 @@
+-        if y is not None:
+-            loss5 = self.loss_fn(out5, y)
+-            loss4 = self.loss_fn(out4, y)
+-            loss3 = self.loss_fn(out3, y)
+-            loss2 = self.loss_fn(out2, y)
+-
+-            loss = loss2 + loss3 + loss4 + loss5
+-            debug = [out5, out4, out3]
+-        else:
+-            loss = 0
+-            debug = []
+-
+-        return {'pred': out2, 'loss': loss, 'debug': debug}
++        # Expose multi-scale side outputs [out5, out4, out3, out2] with primary out2 at [-1]
++        return [out5, out4, out3, out2]
