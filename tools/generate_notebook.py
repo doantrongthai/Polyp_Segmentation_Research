@@ -110,9 +110,12 @@ if exit_code == 0 and os.path.exists(weights_path):
     zip_path = "/content/PolypSeg_{m_id}_seed0_FullPackage.zip"
     os.system(f"zip -q -r {{zip_path}} snapshots/{m_id}/ results/{m_id}/ visualizations/{m_id}/ logs/{m_id}/")
 
-    # Tải thẳng về máy tính qua trình duyệt
-    print(f"📥 Đang tải file {{zip_path}} về máy tính...")
-    files.download(zip_path)
+    # Tải thẳng về máy tính qua trình duyệt (Chạy bất đồng bộ qua browser, không chặn cell tiếp theo)
+    print(f"📥 Đang kích hoạt tải file {{zip_path}} về máy tính...")
+    try:
+        files.download(zip_path)
+    except Exception as e:
+        print(f"⚠️ Trình duyệt chặn popup hoặc lỗi kết nối download ({{e}}). File zip vẫn an toàn tại: {{zip_path}}")
 else:
     print(f"\\n⚠️ [CẢNH BÁO]: Mô hình {m_id.upper()} gặp sự cố (mã thoát {{exit_code}} - có thể do tràn VRAM/OOM).")
     print(f"👉 Đang dọn sạch bộ nhớ đệm VRAM và TỰ ĐỘNG CHUYỂN SANG MÔ HÌNH TIẾP THEO...")
