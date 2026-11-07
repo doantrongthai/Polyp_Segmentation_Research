@@ -58,3 +58,4 @@ def weighted_focal_iou_loss(
     wiou = 1.0 - (inter + 1.0) / (union - inter + 1.0)
 
     return (wfocal + wiou).mean()
+

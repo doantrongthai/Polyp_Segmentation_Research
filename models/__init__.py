@@ -36,8 +36,9 @@ def register_model(name: str):
 
 
 def _auto_import() -> None:
-    """Scan this directory and import every non-private .py module."""
+    """Scan this directory and import every non-private .py module and model package."""
     model_dir = os.path.dirname(os.path.abspath(__file__))
+    # 1. Import modules directly under models/*.py
     for f in sorted(glob.glob(os.path.join(model_dir, "*.py"))):
         module_name = os.path.basename(f)[:-3]
         if module_name != "__init__" and not module_name.startswith("_"):
@@ -45,6 +46,15 @@ def _auto_import() -> None:
                 importlib.import_module(f"models.{module_name}")
             except ImportError as e:
                 print(f"[models] Skipping '{module_name}': missing dependency ({e})")
+
+    # 2. Import packages under models/<model_dir>/ containing __init__.py
+    for d in sorted(glob.glob(os.path.join(model_dir, "*/"))):
+        sub_name = os.path.basename(os.path.normpath(d))
+        if not sub_name.startswith(("_", ".")) and os.path.exists(os.path.join(d, "__init__.py")):
+            try:
+                importlib.import_module(f"models.{sub_name}")
+            except ImportError as e:
+                print(f"[models] Skipping package '{sub_name}': missing dependency ({e})")
 
 
 def get_model(name: str):
