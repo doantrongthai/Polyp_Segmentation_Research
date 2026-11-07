@@ -3,25 +3,13 @@
 - **Source**: `https://github.com/MrBlankness/LightM-UNet/blob/master/lightm-unet/nnunetv2/nets/LightMUNet.py`
 - **Paper**: *LightM-UNet: Mamba Assists in Lightweight UNet for Medical Image Segmentation* (arXiv:2403.05246)
 
-## Modifications
-
-1. **Fallback Mamba import**:
-   - Old: `from mamba_ssm import Mamba`
-   - New:
-     ```python
-     try:
-         from mamba_ssm import Mamba
-     except ImportError:
-         from models._backbone.mamba_fallback import MambaFallback as Mamba
-     ```
-   - Reason: Enable execution without native CUDA compilation on Windows/CPU environments.
-
-2. **Default parameters for 2D Polyp Segmentation**:
-   - Old: `spatial_dims: int = 3, init_filters: int = 8, in_channels: int = 1, out_channels: int = 2`
-   - New: `spatial_dims: int = 2, init_filters: int = 16, in_channels: int = 3, out_channels: int = 1`
-   - Reason: Standardize for 2D RGB colonoscopy polyp segmentation inputs and binary mask outputs (yields ~1.34M params, well within <= 5M).
-
-3. **Registry decoration**:
-   - Old: None
-   - New: Decorated class with `@register_model('lightm_unet')`.
-   - Reason: Integration into PolypSeg registry.
+## Architecture & Code Fidelity
+1. **SSM Dependency**:
+   - Preserves 100% exact official import: `from mamba_ssm import Mamba`.
+   - Requires compiled `mamba_ssm` (CUDA) as in the official repository.
+2. **Layer Architecture**:
+   - `get_dwconv_layer`, `MambaLayer`, `get_mamba_layer`, `ResMambaBlock`, `ResUpBlock`, `LightMUNet`.
+   - Preserves official UNet + Mamba hierarchy with `blocks_down=(1, 2, 2, 4)`, `blocks_up=(1, 1, 1)`.
+3. **Pipeline Integration**:
+   - Added `@register_model('lightm_unet')` for model registry discovery.
+   - Configured defaults for 2D RGB polyp segmentation (`spatial_dims=2`, `in_channels=3`, `out_channels=1`, `init_filters=16`).

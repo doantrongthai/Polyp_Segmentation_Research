@@ -4,7 +4,7 @@ Official Repository: https://github.com/wurenkai/UltraLight-VM-UNet
 Paper: https://arxiv.org/abs/2403.18181 (arXiv:2403.18181, 2024)
 
 Ported with minimal edits for PolypSeg Framework:
-- Safe fallback to models._backbone.mamba_fallback if mamba_ssm is not installed.
+- Direct official mamba_ssm dependency (from mamba_ssm import Mamba).
 - Returns raw logits for compatibility with PolypSeg loss functions (BCEWithLogits, StructureLoss, etc.).
 - Registered with @register_model('ultralight_vmunet').
 """
@@ -16,11 +16,7 @@ import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
 
 from models import register_model
-
-try:
-    from mamba_ssm import Mamba
-except ImportError:
-    from models._backbone.mamba_fallback import MambaFallback as Mamba
+from mamba_ssm import Mamba
 
 
 class PVMLayer(nn.Module):

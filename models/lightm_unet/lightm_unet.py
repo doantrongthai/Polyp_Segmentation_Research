@@ -4,7 +4,7 @@ Official Repository: https://github.com/MrBlankness/LightM-UNet
 Paper: https://arxiv.org/abs/2403.05246 (arXiv:2403.05246, 2024)
 
 Ported with minimal edits for PolypSeg Framework:
-- Fallback to models._backbone.mamba_fallback if mamba_ssm is not installed.
+- Direct official mamba_ssm dependency (from mamba_ssm import Mamba).
 - Default to spatial_dims=2, in_channels=3, out_channels=1 for 2D polyp segmentation.
 - Registered with @register_model('lightm_unet').
 """
@@ -20,11 +20,7 @@ from monai.networks.layers.utils import get_act_layer, get_norm_layer
 from monai.utils import UpsampleMode
 
 from models import register_model
-
-try:
-    from mamba_ssm import Mamba
-except ImportError:
-    from models._backbone.mamba_fallback import MambaFallback as Mamba
+from mamba_ssm import Mamba
 
 
 def get_dwconv_layer(
