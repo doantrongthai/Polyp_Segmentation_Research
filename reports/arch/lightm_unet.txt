@@ -1,0 +1,415 @@
+torchinfo summary error: Failed to run torchinfo. See above stack traces for more details. Executed layers up to: [Sequential: 1, Convolution: 2, Conv2d: 3, Convolution: 2, Conv2d: 3, Sequential: 2, Identity: 3, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, Sequential: 2, Sequential: 3, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, MaxPool2d: 4, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, Sequential: 2, Sequential: 3, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, MaxPool2d: 4, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, Sequential: 2, Sequential: 3, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, MaxPool2d: 4, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, ResMambaBlock: 3, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, GroupNorm: 4, ReLU: 4, MambaLayer: 4, LayerNorm: 5, Mamba: 5, Conv1d: 6, SiLU: 6, Linear: 6, Linear: 6, LayerNorm: 5, Linear: 5, Sequential: 2, Convolution: 3, Conv2d: 4, UpSample: 3, Upsample: 4, Sequential: 2, ResUpBlock: 3, GroupNorm: 4, ReLU: 4, Sequential: 4, Convolution: 5, Conv2d: 6, Convolution: 5, Conv2d: 6, GroupNorm: 4, ReLU: 4, Sequential: 2, Convolution: 3, Conv2d: 4, UpSample: 3, Upsample: 4, Sequential: 2, ResUpBlock: 3, GroupNorm: 4, ReLU: 4, Sequential: 4, Convolution: 5, Conv2d: 6, Convolution: 5, Conv2d: 6, GroupNorm: 4, ReLU: 4, Sequential: 2, Convolution: 3, Conv2d: 4, UpSample: 3, Upsample: 4, Sequential: 2, ResUpBlock: 3, GroupNorm: 4, ReLU: 4, Sequential: 4, Convolution: 5, Conv2d: 6, Convolution: 5, Conv2d: 6, GroupNorm: 4, ReLU: 4, GroupNorm: 2]
+
+LightMUNet(
+  (act_mod): ReLU(inplace=True)
+  (convInit): Sequential(
+    (0): Convolution(
+      (conv): Conv2d(3, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=3, bias=False)
+    )
+    (1): Convolution(
+      (conv): Conv2d(3, 16, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    )
+  )
+  (down_layers): ModuleList(
+    (0): Sequential(
+      (0): Identity()
+      (1): ResMambaBlock(
+        (norm1): GroupNorm(8, 16, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 16, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((16,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=16, out_features=64, bias=False)
+            (conv1d): Conv1d(32, 32, kernel_size=(4,), stride=(1,), padding=(3,), groups=32)
+            (act): SiLU()
+            (x_proj): Linear(in_features=32, out_features=33, bias=False)
+            (dt_proj): Linear(in_features=1, out_features=32, bias=True)
+            (out_proj): Linear(in_features=32, out_features=16, bias=False)
+          )
+          (proj): Linear(in_features=16, out_features=16, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((16,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=16, out_features=64, bias=False)
+            (conv1d): Conv1d(32, 32, kernel_size=(4,), stride=(1,), padding=(3,), groups=32)
+            (act): SiLU()
+            (x_proj): Linear(in_features=32, out_features=33, bias=False)
+            (dt_proj): Linear(in_features=1, out_features=32, bias=True)
+            (out_proj): Linear(in_features=32, out_features=16, bias=False)
+          )
+          (proj): Linear(in_features=16, out_features=16, bias=True)
+        )
+      )
+    )
+    (1): Sequential(
+      (0): Sequential(
+        (0): MambaLayer(
+          (norm): LayerNorm((16,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=16, out_features=64, bias=False)
+            (conv1d): Conv1d(32, 32, kernel_size=(4,), stride=(1,), padding=(3,), groups=32)
+            (act): SiLU()
+            (x_proj): Linear(in_features=32, out_features=33, bias=False)
+            (dt_proj): Linear(in_features=1, out_features=32, bias=True)
+            (out_proj): Linear(in_features=32, out_features=16, bias=False)
+          )
+          (proj): Linear(in_features=16, out_features=32, bias=True)
+        )
+        (1): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      )
+      (1): ResMambaBlock(
+        (norm1): GroupNorm(8, 32, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 32, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=32, out_features=128, bias=False)
+            (conv1d): Conv1d(64, 64, kernel_size=(4,), stride=(1,), padding=(3,), groups=64)
+            (act): SiLU()
+            (x_proj): Linear(in_features=64, out_features=34, bias=False)
+            (dt_proj): Linear(in_features=2, out_features=64, bias=True)
+            (out_proj): Linear(in_features=64, out_features=32, bias=False)
+          )
+          (proj): Linear(in_features=32, out_features=32, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=32, out_features=128, bias=False)
+            (conv1d): Conv1d(64, 64, kernel_size=(4,), stride=(1,), padding=(3,), groups=64)
+            (act): SiLU()
+            (x_proj): Linear(in_features=64, out_features=34, bias=False)
+            (dt_proj): Linear(in_features=2, out_features=64, bias=True)
+            (out_proj): Linear(in_features=64, out_features=32, bias=False)
+          )
+          (proj): Linear(in_features=32, out_features=32, bias=True)
+        )
+      )
+      (2): ResMambaBlock(
+        (norm1): GroupNorm(8, 32, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 32, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=32, out_features=128, bias=False)
+            (conv1d): Conv1d(64, 64, kernel_size=(4,), stride=(1,), padding=(3,), groups=64)
+            (act): SiLU()
+            (x_proj): Linear(in_features=64, out_features=34, bias=False)
+            (dt_proj): Linear(in_features=2, out_features=64, bias=True)
+            (out_proj): Linear(in_features=64, out_features=32, bias=False)
+          )
+          (proj): Linear(in_features=32, out_features=32, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=32, out_features=128, bias=False)
+            (conv1d): Conv1d(64, 64, kernel_size=(4,), stride=(1,), padding=(3,), groups=64)
+            (act): SiLU()
+            (x_proj): Linear(in_features=64, out_features=34, bias=False)
+            (dt_proj): Linear(in_features=2, out_features=64, bias=True)
+            (out_proj): Linear(in_features=64, out_features=32, bias=False)
+          )
+          (proj): Linear(in_features=32, out_features=32, bias=True)
+        )
+      )
+    )
+    (2): Sequential(
+      (0): Sequential(
+        (0): MambaLayer(
+          (norm): LayerNorm((32,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=32, out_features=128, bias=False)
+            (conv1d): Conv1d(64, 64, kernel_size=(4,), stride=(1,), padding=(3,), groups=64)
+            (act): SiLU()
+            (x_proj): Linear(in_features=64, out_features=34, bias=False)
+            (dt_proj): Linear(in_features=2, out_features=64, bias=True)
+            (out_proj): Linear(in_features=64, out_features=32, bias=False)
+          )
+          (proj): Linear(in_features=32, out_features=64, bias=True)
+        )
+        (1): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      )
+      (1): ResMambaBlock(
+        (norm1): GroupNorm(8, 64, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 64, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=64, out_features=256, bias=False)
+            (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+            (act): SiLU()
+            (x_proj): Linear(in_features=128, out_features=36, bias=False)
+            (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+            (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          )
+          (proj): Linear(in_features=64, out_features=64, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=64, out_features=256, bias=False)
+            (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+            (act): SiLU()
+            (x_proj): Linear(in_features=128, out_features=36, bias=False)
+            (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+            (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          )
+          (proj): Linear(in_features=64, out_features=64, bias=True)
+        )
+      )
+      (2): ResMambaBlock(
+        (norm1): GroupNorm(8, 64, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 64, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=64, out_features=256, bias=False)
+            (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+            (act): SiLU()
+            (x_proj): Linear(in_features=128, out_features=36, bias=False)
+            (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+            (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          )
+          (proj): Linear(in_features=64, out_features=64, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=64, out_features=256, bias=False)
+            (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+            (act): SiLU()
+            (x_proj): Linear(in_features=128, out_features=36, bias=False)
+            (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+            (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          )
+          (proj): Linear(in_features=64, out_features=64, bias=True)
+        )
+      )
+    )
+    (3): Sequential(
+      (0): Sequential(
+        (0): MambaLayer(
+          (norm): LayerNorm((64,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=64, out_features=256, bias=False)
+            (conv1d): Conv1d(128, 128, kernel_size=(4,), stride=(1,), padding=(3,), groups=128)
+            (act): SiLU()
+            (x_proj): Linear(in_features=128, out_features=36, bias=False)
+            (dt_proj): Linear(in_features=4, out_features=128, bias=True)
+            (out_proj): Linear(in_features=128, out_features=64, bias=False)
+          )
+          (proj): Linear(in_features=64, out_features=128, bias=True)
+        )
+        (1): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+      )
+      (1): ResMambaBlock(
+        (norm1): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+      )
+      (2): ResMambaBlock(
+        (norm1): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+      )
+      (3): ResMambaBlock(
+        (norm1): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+      )
+      (4): ResMambaBlock(
+        (norm1): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 128, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv1): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+        (conv2): MambaLayer(
+          (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True, bias=True)
+          (mamba): Mamba(
+            (in_proj): Linear(in_features=128, out_features=512, bias=False)
+            (conv1d): Conv1d(256, 256, kernel_size=(4,), stride=(1,), padding=(3,), groups=256)
+            (act): SiLU()
+            (x_proj): Linear(in_features=256, out_features=40, bias=False)
+            (dt_proj): Linear(in_features=8, out_features=256, bias=True)
+            (out_proj): Linear(in_features=256, out_features=128, bias=False)
+          )
+          (proj): Linear(in_features=128, out_features=128, bias=True)
+        )
+      )
+    )
+  )
+  (up_layers): ModuleList(
+    (0): Sequential(
+      (0): ResUpBlock(
+        (norm1): GroupNorm(8, 64, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 64, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv): Sequential(
+          (0): Convolution(
+            (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64, bias=False)
+          )
+          (1): Convolution(
+            (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          )
+        )
+      )
+    )
+    (1): Sequential(
+      (0): ResUpBlock(
+        (norm1): GroupNorm(8, 32, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 32, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv): Sequential(
+          (0): Convolution(
+            (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32, bias=False)
+          )
+          (1): Convolution(
+            (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          )
+        )
+      )
+    )
+    (2): Sequential(
+      (0): ResUpBlock(
+        (norm1): GroupNorm(8, 16, eps=1e-05, affine=True, bias=True)
+        (norm2): GroupNorm(8, 16, eps=1e-05, affine=True, bias=True)
+        (act): ReLU(inplace=True)
+        (conv): Sequential(
+          (0): Convolution(
+            (conv): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16, bias=False)
+          )
+          (1): Convolution(
+            (conv): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          )
+        )
+      )
+    )
+  )
+  (up_samples): ModuleList(
+    (0): Sequential(
+      (0): Convolution(
+        (conv): Conv2d(128, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+      )
+      (1): UpSample(
+        (upsample_non_trainable): Upsample(scale_factor=(2.0, 2.0), mode='bilinear')
+      )
+    )
+    (1): Sequential(
+      (0): Convolution(
+        (conv): Conv2d(64, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+      )
+      (1): UpSample(
+        (upsample_non_trainable): Upsample(scale_factor=(2.0, 2.0), mode='bilinear')
+      )
+    )
+    (2): Sequential(
+      (0): Convolution(
+        (conv): Conv2d(32, 16, kernel_size=(1, 1), stride=(1, 1), bias=False)
+      )
+      (1): UpSample(
+        (upsample_non_trainable): Upsample(scale_factor=(2.0, 2.0), mode='bilinear')
+      )
+    )
+  )
+  (conv_final): Sequential(
+    (0): GroupNorm(8, 16, eps=1e-05, affine=True, bias=True)
+    (1): ReLU(inplace=True)
+    (2): Sequential(
+      (0): Convolution(
+        (conv): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+      )
+      (1): Convolution(
+        (conv): Conv2d(16, 1, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+  )
+)

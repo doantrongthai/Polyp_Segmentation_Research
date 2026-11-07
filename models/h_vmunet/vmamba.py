@@ -11,15 +11,19 @@ from einops import rearrange, repeat
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 try:
     from mamba_ssm.ops.selective_scan_interface import selective_scan_fn, selective_scan_ref
-except:
-    pass
+except ImportError:
+    try:
+        from selective_scan import selective_scan_fn, selective_scan_ref
+    except ImportError:
+        from models.common.mamba_pure import selective_scan_fn, selective_scan_ref
 
 # an alternative for mamba_ssm (in which causal_conv1d is needed)
 try:
     from selective_scan import selective_scan_fn as selective_scan_fn_v1
     from selective_scan import selective_scan_ref as selective_scan_ref_v1
-except:
-    pass
+except ImportError:
+    selective_scan_fn_v1 = selective_scan_fn
+    selective_scan_ref_v1 = selective_scan_ref
 
 DropPath.__repr__ = lambda self: f"timm.DropPath({self.drop_prob})"
 

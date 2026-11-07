@@ -20,7 +20,10 @@ from monai.networks.layers.utils import get_act_layer, get_norm_layer
 from monai.utils import UpsampleMode
 
 from models import register_model
-from mamba_ssm import Mamba
+try:
+    from mamba_ssm import Mamba
+except ImportError:
+    from models.common.mamba_pure import Mamba
 
 
 def get_dwconv_layer(

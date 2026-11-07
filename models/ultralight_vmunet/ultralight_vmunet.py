@@ -16,7 +16,10 @@ import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
 
 from models import register_model
-from mamba_ssm import Mamba
+try:
+    from mamba_ssm import Mamba
+except ImportError:
+    from models.common.mamba_pure import Mamba
 
 
 class PVMLayer(nn.Module):
