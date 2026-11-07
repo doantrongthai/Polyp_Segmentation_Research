@@ -4,11 +4,7 @@ import os
 os.makedirs('notebooks', exist_ok=True)
 
 models_catalog = [
-    # Group 1: Classic & Convolutional Baselines
-    ('unet', 'U-Net (MICCAI 2015)'),
-    ('unet++', 'U-Net++ (DLMIA 2018)'),
-    ('resunetplusplus', 'ResUNet++ (IEEE ISM 2019)'),
-    ('doubleunet', 'DoubleU-Net (IEEE CBMS 2020)'),
+    # Group 1: Published Polyp CNN Baselines (Removed unet, unet++, resunet++, doubleunet due to OOM)
     ('pranet', 'PraNet (MICCAI 2020)'),
     ('hardnet_mseg', 'HarDNet-MSEG (arXiv 2021)'),
     ('sanet', 'SANet (MICCAI 2021)'),
@@ -52,15 +48,19 @@ cells = []
 
 # Title & Overview markdown cell
 intro_md = """# 🔬 Polyp Segmentation Research: Full Benchmark Suite (Seed 0)
-This notebook trains, evaluates, exports publication figures, and automatically packages & downloads weights for **all 35 canonical models** in the benchmark suite using `seed=0`.
+Notebook này dùng để huấn luyện, đánh giá benchmark (5 test sets), trực quan hóa Grad-CAM và tự động tải toàn bộ weights (`best.pth`) cùng kết quả về máy tính cho **31 mô hình polyp segmentation**.
 
-### 📌 Features & Auto-Download
-- **Direct Browser Download**: Immediately packages `best.pth`, metrics (CSV/LaTeX tables), training curves, and Grad-CAM figures into a zip file and triggers download to your local machine.
-- **Run All Safe (OOM-Resilient)**: Wrapped with `os.system` and VRAM cleanup. If any single model encounters OOM, it flushes memory and continues with the next models automatically.
-- **Deterministic**: Seed 0 fixed across all runs.
-- **Automated Dataset**: Automatically downloads `dataset.zip` from Hugging Face (`doantrongthai/Polyp_Segmentation`) on first training call.
-- **Standard Protocol**: Multi-scale training (0.75, 1.0, 1.25), `structure_loss`, Adam optimizer, 100 epochs.
-- **5 Benchmark Test Sets**: `CVC-300`, `CVC-ClinicDB`, `CVC-ColonDB`, `ETIS-LaribPolypDB`, `Kvasir-SEG`.
+### 📌 Hướng dẫn sử dụng:
+1. Chạy **Cell 0** để clone repository và cài đặt thư viện.
+2. Mỗi mô hình được đặt trong **đúng 1 cell** riêng biệt với cú pháp chuẩn trực quan:
+   ```bash
+   !python train.py --model <tên_model> --loss structure_loss --seed 0
+   !python visualize.py --model <tên_model> --weights snapshots/<tên_model>/best.pth --dataset all --num_samples 5
+   !zip -q -r /content/PolypSeg_<tên_model>_seed0.zip snapshots/<tên_model>/ results/<tên_model>/ visualizations/<tên_model>/ logs/<tên_model>/
+   from google.colab import files
+   files.download('/content/PolypSeg_<tên_model>_seed0.zip')
+   ```
+3. Toàn bộ log huấn luyện (tqdm progress bar, loss, learning rate, validation mDice/mIoU) hiển thị trực tiếp và chi tiết trên màn hình cell.
 """
 
 cells.append({
@@ -69,7 +69,7 @@ cells.append({
     'source': [line + '\n' for line in intro_md.split('\n')]
 })
 
-# Setup cell (Zero Google Drive dependency)
+# Setup cell
 setup_code = """# ==============================================================================
 # CELL 0: CLONE REPO & SETUP ENVIRONMENT
 # ==============================================================================
@@ -86,44 +86,18 @@ cells.append({
     'source': [line + '\n' for line in setup_code.split('\n')]
 })
 
-# Model cells with direct browser download only
+# Clean model cells matching edanet.ipynb
 for idx, (m_id, m_desc) in enumerate(models_catalog, 1):
     m_cell_code = f"""# ==============================================================================
-# [{idx:02d}/35] MODEL: {m_id.upper()} ({m_desc}) - Seed 0
+# [{idx:02d}/31] MODEL: {m_id.upper()} ({m_desc}) - Seed 0
 # ==============================================================================
-import os, gc, torch
+!python train.py --model {m_id} --loss structure_loss --seed 0
+
+!python visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5
+
+!zip -q -r /content/PolypSeg_{m_id}_seed0.zip snapshots/{m_id}/ results/{m_id}/ visualizations/{m_id}/ logs/{m_id}/
 from google.colab import files
-
-print("=" * 70)
-print(f"🚀 [START] Huấn luyện mô hình [{idx:02d}/35]: {m_id.upper()} (Seed 0)")
-print("=" * 70)
-
-# Thực thi lệnh train qua os.system (-u để log hiển thị real-time, không đọng buffer)
-exit_code = os.system("python -u train.py --model {m_id} --loss structure_loss --seed 0")
-
-weights_path = "snapshots/{m_id}/best.pth"
-if exit_code == 0 and os.path.exists(weights_path):
-    print(f"\\n✅ Huấn luyện thành công: {m_id.upper()}! Đang xuất biểu đồ và trực quan hóa...")
-    os.system("python -u visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5")
-
-    # Đóng gói toàn bộ weights (.pth), bảng kết quả (CSV/LaTeX) & hình ảnh
-    zip_path = "/content/PolypSeg_{m_id}_seed0_FullPackage.zip"
-    os.system(f"zip -q -r {{zip_path}} snapshots/{m_id}/ results/{m_id}/ visualizations/{m_id}/ logs/{m_id}/")
-
-    # Tải thẳng về máy tính qua trình duyệt (Chạy bất đồng bộ qua browser, không chặn cell tiếp theo)
-    print(f"📥 Đang kích hoạt tải file {{zip_path}} về máy tính...")
-    try:
-        files.download(zip_path)
-    except Exception as e:
-        print(f"⚠️ Trình duyệt chặn popup hoặc lỗi kết nối download ({{e}}). File zip vẫn an toàn tại: {{zip_path}}")
-else:
-    print(f"\\n⚠️ [CẢNH BÁO]: Mô hình {m_id.upper()} gặp sự cố (mã thoát {{exit_code}} - có thể do tràn VRAM/OOM).")
-    print(f"👉 Đang dọn sạch bộ nhớ đệm VRAM và TỰ ĐỘNG CHUYỂN SANG MÔ HÌNH TIẾP THEO...")
-
-# Dọn sạch triệt để bộ nhớ đệm VRAM và garbage collector trước khi sang cell sau
-gc.collect()
-if torch.cuda.is_available():
-    torch.cuda.empty_cache()
+files.download('/content/PolypSeg_{m_id}_seed0.zip')
 """
     cells.append({
         'cell_type': 'code',
@@ -156,4 +130,4 @@ nb = {
 with open('notebooks/run_all_models_seed0.ipynb', 'w', encoding='utf-8') as f:
     json.dump(nb, f, indent=2, ensure_ascii=False)
 
-print('Regenerated clean direct-download notebook successfully at notebooks/run_all_models_seed0.ipynb!')
+print(f'Successfully generated clean standard notebook with {len(models_catalog)} models at notebooks/run_all_models_seed0.ipynb!')
