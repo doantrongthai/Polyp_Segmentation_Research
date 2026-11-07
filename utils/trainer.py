@@ -14,6 +14,7 @@ from datetime import datetime
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+from utils.model_utils import compute_loss_with_aux, fuse_outputs
 
 
 def clip_gradient(optimizer, grad_clip: float = 0.5):
@@ -102,18 +103,7 @@ class Trainer:
                     scaled_gts = gts
 
                 outputs = self.model(scaled_images)
-
-                if isinstance(outputs, (tuple, list)) and len(outputs) == 4:
-                    lat5, lat4, lat3, lat2 = outputs
-                    l5 = self.loss_fn(lat5, scaled_gts)
-                    l4 = self.loss_fn(lat4, scaled_gts)
-                    l3 = self.loss_fn(lat3, scaled_gts)
-                    l2 = self.loss_fn(lat2, scaled_gts)
-                    loss = l2 + l3 + l4 + l5
-                elif isinstance(outputs, (tuple, list)):
-                    loss = sum(self.loss_fn(out, scaled_gts) for out in outputs)
-                else:
-                    loss = self.loss_fn(outputs, scaled_gts)
+                loss = compute_loss_with_aux(outputs, scaled_gts, self.loss_fn)
 
                 loss.backward()
                 clip_gradient(self.optimizer, self.cfg.clip)
@@ -153,7 +143,7 @@ class Trainer:
             for images, gts in val_loader:
                 images = images.to(self.device)
                 outputs = self.model(images)
-                pred = outputs[-1] if isinstance(outputs, (tuple, list)) else outputs
+                pred = fuse_outputs(outputs)
                 pred = torch.sigmoid(pred).squeeze(1).cpu().numpy()
                 gts_np = gts.squeeze(1).cpu().numpy()
 

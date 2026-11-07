@@ -26,6 +26,7 @@ logs/*
 # Reference cloned repos
 ref_repos/
 Ref/
+vendor/
 
 # IDE / OS
 .vscode/

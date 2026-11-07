@@ -26,6 +26,7 @@ import pandas as pd
 from utils.metrics import MetricCalculator
 from utils.dataloader import TestDataset
 from utils.edge_profiler import EdgeProfiler
+from utils.model_utils import fuse_outputs
 
 try:
     from tabulate import tabulate
@@ -106,8 +107,8 @@ class Evaluator:
                     img_tensor = img_tensor.to(self.device)
                     outputs = self.model(img_tensor)
 
-                    # Extract finest prediction (last element if multi-output)
-                    pred = outputs[-1] if isinstance(outputs, (tuple, list)) else outputs
+                    # Extract finest prediction (primary prediction map)
+                    pred = fuse_outputs(outputs)
 
                     # Upsample prediction back to original image size
                     pred = F.interpolate(pred, size=(orig_h, orig_w), mode='bilinear', align_corners=False)
