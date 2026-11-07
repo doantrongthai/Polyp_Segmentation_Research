@@ -98,13 +98,13 @@ print("=" * 70)
 print(f"🚀 [START] Huấn luyện mô hình [{idx:02d}/35]: {m_id.upper()} (Seed 0)")
 print("=" * 70)
 
-# Thực thi lệnh train qua os.system: Nếu bị OOM thì chỉ bắt mã lỗi, không làm sập hàng đợi Run All
-exit_code = os.system("python train.py --model {m_id} --loss structure_loss --seed 0")
+# Thực thi lệnh train qua os.system (-u để log hiển thị real-time, không đọng buffer)
+exit_code = os.system("python -u train.py --model {m_id} --loss structure_loss --seed 0")
 
 weights_path = "snapshots/{m_id}/best.pth"
 if exit_code == 0 and os.path.exists(weights_path):
     print(f"\\n✅ Huấn luyện thành công: {m_id.upper()}! Đang xuất biểu đồ và trực quan hóa...")
-    os.system("python visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5")
+    os.system("python -u visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5")
 
     # Đóng gói toàn bộ weights (.pth), bảng kết quả (CSV/LaTeX) & hình ảnh
     zip_path = "/content/PolypSeg_{m_id}_seed0_FullPackage.zip"
