@@ -1,0 +1,45 @@
+--- vendor/UNeXt/archs.py
++++ models/unext.py
+@@ -1,23 +1,22 @@
+-import torch
+-from torch import nn
+-import torch
+-import torchvision
+-from torch import nn
+-from torch.autograd import Variable
+-from torch.utils.data import DataLoader
+-from torchvision import transforms
+-from torchvision.utils import save_image
+-import torch.nn.functional as F
+-import os
+-import matplotlib.pyplot as plt
+-from utils import *
+-__all__ = ['UNext']
++import math
++import torch
++import torch.nn as nn
++import torch.nn.functional as F
+ 
+-import timm
+-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+-import types
+-import math
+-from abc import ABCMeta, abstractmethod
+-from mmcv.cnn import ConvModule
+-import pdb
++try:
++    from timm.layers import DropPath, to_2tuple, trunc_normal_
++except ImportError:
++    from timm.models.layers import DropPath, to_2tuple, trunc_normal_
++
++from models import register_model
+@@ -206,7 +206,8 @@
++@register_model("unext")
+ class UNext(nn.Module):
+ 
+     ## Conv 3 + MLP 2 + shifted MLP
+     
+-    def __init__(self,  num_classes, input_channels=3, deep_supervision=False,img_size=224, patch_size=16, in_chans=3,  embed_dims=[ 128, 160, 256],
++    def __init__(self, num_classes: int = 1, input_channels: int = 3, in_channels: int = 3,
++                 deep_supervision: bool = False, img_size: int = 224, patch_size: int = 16,
++                 in_chans: int = 3, embed_dims=[128, 160, 256],
