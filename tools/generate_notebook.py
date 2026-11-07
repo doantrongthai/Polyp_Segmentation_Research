@@ -54,13 +54,14 @@ cells = []
 intro_md = """# 🔬 Polyp Segmentation Research: Full Benchmark Suite (Seed 0)
 This notebook trains, evaluates, exports publication figures, and automatically packages & downloads weights for **all 35 canonical models** in the benchmark suite using `seed=0`.
 
-### 📌 Features
+### 📌 Fault-Tolerant & OOM-Resilient Execution
+- **Run All Safe**: Wrapped in an error-handling layer with `os.system` and VRAM garbage collection. If any individual model encounters an Out-Of-Memory (OOM) or runtime error, it **logs the issue, flushes GPU VRAM, and automatically continues executing the next models** without halting the batch run.
 - **Deterministic**: Seed 0 fixed across all runs.
 - **Automated Dataset**: Automatically downloads `dataset.zip` from Hugging Face (`doantrongthai/Polyp_Segmentation`) on first training call.
 - **Standard Protocol**: Multi-scale training (0.75, 1.0, 1.25), `structure_loss`, Adam optimizer, 100 epochs.
 - **5 Benchmark Test Sets**: `CVC-300`, `CVC-ClinicDB`, `CVC-ColonDB`, `ETIS-LaribPolypDB`, `Kvasir-SEG`.
 - **Automatic Export**: Metrics (CSV, LaTeX table), Loss curves, Publication figures (Grad-CAM), and Best weights (`best.pth`).
-- **Auto-Download**: Each model's full artifact package is automatically zipped and prompted for download to your computer upon completion (with Google Drive backup if mounted).
+- **Auto-Download & Drive Backup**: Each model's full artifact package is automatically zipped and prompted for browser download (plus Google Drive backup if mounted).
 """
 
 cells.append({
@@ -97,24 +98,46 @@ cells.append({
     'source': [line + '\n' for line in setup_code.split('\n')]
 })
 
-# Model cells
+# Model cells with Fault-Tolerant OOM-safe wrapper
 for idx, (m_id, m_desc) in enumerate(models_catalog, 1):
     m_cell_code = f"""# ==============================================================================
-# [{idx:02d}/35] MODEL: {m_id.upper()} ({m_desc}) - Seed 0
+# [{idx:02d}/35] MODEL: {m_id.upper()} ({m_desc}) - Seed 0 [Fault-Tolerant / OOM-Safe]
 # ==============================================================================
-!python train.py --model {m_id} --loss structure_loss --seed 0
-
-!python visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5
-
-# Tự động nén toàn bộ weights (.pth), bảng kết quả (CSV/LaTeX) & hình ảnh
-!zip -q -r /content/PolypSeg_{m_id}_seed0_FullPackage.zip snapshots/{m_id}/ results/{m_id}/ visualizations/{m_id}/ logs/{m_id}/
-
-# Sao lưu vào Google Drive (nếu có mount Drive)
-!cp /content/PolypSeg_{m_id}_seed0_FullPackage.zip /content/drive/MyDrive/PolypSeg_Backups/ 2>/dev/null || true
-
-# Tải thẳng về máy tính qua trình duyệt
+import os, gc, torch
 from google.colab import files
-files.download('/content/PolypSeg_{m_id}_seed0_FullPackage.zip')
+
+print("=" * 70)
+print(f"🚀 [START] Huấn luyện mô hình [{idx:02d}/35]: {m_id.upper()} (Seed 0)")
+print("=" * 70)
+
+# Thực thi lệnh train qua os.system để bắt mã lỗi, không làm sập hàng đợi Run All nếu bị OOM
+exit_code = os.system("python train.py --model {m_id} --loss structure_loss --seed 0")
+
+weights_path = "snapshots/{m_id}/best.pth"
+if exit_code == 0 and os.path.exists(weights_path):
+    print(f"\\n✅ Huấn luyện thành công: {m_id.upper()}! Đang xuất biểu đồ và trực quan hóa...")
+    os.system("python visualize.py --model {m_id} --weights snapshots/{m_id}/best.pth --dataset all --num_samples 5")
+
+    # Đóng gói toàn bộ weights (.pth), bảng kết quả (CSV/LaTeX) & hình ảnh
+    zip_path = "/content/PolypSeg_{m_id}_seed0_FullPackage.zip"
+    os.system(f"zip -q -r {{zip_path}} snapshots/{m_id}/ results/{m_id}/ visualizations/{m_id}/ logs/{m_id}/")
+
+    # Sao lưu sang Google Drive (nếu có mount Drive)
+    os.system(f"cp {{zip_path}} /content/drive/MyDrive/PolypSeg_Backups/ 2>/dev/null")
+
+    # Kích hoạt tải về máy tính qua trình duyệt
+    try:
+        files.download(zip_path)
+    except Exception as e:
+        print(f"ℹ️ File zip đã lưu sẵn sàng tại: {{zip_path}} (Lưu ý: {{e}})")
+else:
+    print(f"\\n⚠️ [CẢNH BÁO]: Mô hình {m_id.upper()} gặp sự cố (mã thoát {{exit_code}} - có thể do tràn VRAM/OOM).")
+    print(f"👉 Đang dọn sạch bộ nhớ đệm VRAM và TỰ ĐỘNG CHUYỂN SANG MÔ HÌNH TIẾP THEO...")
+
+# Dọn sạch triệt để bộ nhớ đệm VRAM và garbage collector trước khi sang cell sau
+gc.collect()
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
 """
     cells.append({
         'cell_type': 'code',
@@ -147,4 +170,4 @@ nb = {
 with open('notebooks/run_all_models_seed0.ipynb', 'w', encoding='utf-8') as f:
     json.dump(nb, f, indent=2, ensure_ascii=False)
 
-print('Generated notebook with', len(cells), 'cells successfully at notebooks/run_all_models_seed0.ipynb!')
+print('Regenerated fault-tolerant notebook successfully at notebooks/run_all_models_seed0.ipynb!')
